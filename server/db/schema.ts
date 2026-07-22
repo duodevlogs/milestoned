@@ -54,6 +54,11 @@ export const documents = pgTable(
     projectName: text("project_name").notNull(),
     content: jsonb("content").notNull(),
     pdfUrl: text("pdf_url"),
+    status: text("status", {
+      enum: ["draft", "sent", "signed", "paid"],
+    })
+      .notNull()
+      .default("draft"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -66,3 +71,4 @@ export const documents = pgTable(
 export type User = typeof users.$inferSelect;
 export type Document = typeof documents.$inferSelect;
 export type FoundingMember = typeof foundingMembers.$inferSelect;
+export type DocumentStatus = Document["status"];

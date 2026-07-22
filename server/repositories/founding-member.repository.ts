@@ -22,4 +22,19 @@ export const foundingMemberRepository = {
       .limit(1);
     return rows[0] ?? null;
   },
+
+  /**
+   * Marks an email as a paid founding member. Idempotent on `email` — safe
+   * to call repeatedly for the same checkout (Stripe redelivers webhooks).
+   */
+  async upsertPaid(email: string, stripeCustomerId: string): Promise<void> {
+    const db = getDb();
+    await db
+      .insert(foundingMembers)
+      .values({ email, stripeCustomerId, paymentStatus: "paid" })
+      .onConflictDoUpdate({
+        target: foundingMembers.email,
+        set: { stripeCustomerId, paymentStatus: "paid" },
+      });
+  },
 };

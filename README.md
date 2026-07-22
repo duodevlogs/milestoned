@@ -8,7 +8,7 @@ interest-free payment terms built into every document.
 
 Next.js (App Router) · Vercel · Supabase (Postgres + Auth) · Drizzle ORM ·
 Tailwind CSS v4 · Zustand · TanStack Query · Zod · Stripe ·
-Claude API (claude-haiku-4-5) · @react-pdf/renderer · Resend
+OpenAI API (gpt-5.4-nano) · @react-pdf/renderer · Resend
 
 ## Architecture
 
@@ -22,7 +22,7 @@ HTTP layer  →  controller  →  service  →  repository  →  database
 | --- | --- | --- |
 | HTTP | `app/api/**/route.ts`, server actions (`app/**/actions.ts`) | Parse the request, call one controller method, return/redirect. **No business logic.** |
 | Controllers | `server/controllers/` | Validate raw input with Zod, handle auth/session checks, call services, shape the response. No DB or external-API calls. |
-| Services | `server/services/` | All business logic: credit checks, rate limiting, Claude API, Stripe, orchestration. Never touch the DB directly. |
+| Services | `server/services/` | All business logic: credit checks, rate limiting, the AI generation API, Stripe, orchestration. Never touch the DB directly. |
 | Repositories | `server/repositories/` | The only layer that queries the database, via Drizzle. One repository per table. |
 | DB | `server/db/` | Drizzle client + schema (mirrors `supabase/migrations/`). |
 
@@ -59,10 +59,12 @@ Other conventions:
 ## Setup
 
 1. **Env vars** — copy `.env.example` to `.env.local` and fill in values.
-   `.env*` is gitignored; server-only secrets (`SUPABASE_SERVICE_ROLE_KEY`,
+   `.env*` is gitignored; server-only secrets (`SUPABASE_SECRET_KEY`,
    `DATABASE_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
-   `CLAUDE_API_KEY`, `RESEND_API_KEY`) are read only via `process.env` in
-   server code.
+   `OPENAI_API_KEY`, `RESEND_API_KEY`) are read only via `process.env` in
+   server code. Supabase's client-safe key is `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+   (the current `sb_publishable_...` key — Supabase is retiring the legacy
+   `anon` JWT by end of 2026).
 
 2. **Supabase** — create a project at supabase.com, then run
    `supabase/migrations/0001_init.sql` in the SQL editor. This creates
@@ -80,9 +82,9 @@ Other conventions:
 
 ## Security invariants
 
-- Claude + Stripe secret keys never appear in client code — server routes only.
+- OpenAI + Stripe secret keys never appear in client code — server routes only.
 - Stripe webhooks verify signatures with `STRIPE_WEBHOOK_SECRET` before processing.
-- Generation route checks auth + credits + rate limit **before** calling Claude.
+- Generation route checks auth + credits + rate limit **before** calling the AI API.
 - `founding_members` is written only by the webhook (service role); RLS denies
   all client access.
 - No secrets in Zustand, TanStack Query cache, or any client-visible state.
