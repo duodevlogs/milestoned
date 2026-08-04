@@ -3,7 +3,7 @@ import "server-only";
 import type Stripe from "stripe";
 import { AppError } from "@/server/errors";
 import { stripeService } from "@/server/services/stripe.service";
-import { foundingMemberService } from "@/server/services/founding-member.service";
+import { creditTopUpService } from "@/server/services/credit-topup.service";
 
 export const webhookController = {
   /**
@@ -29,28 +29,33 @@ export const webhookController = {
     }
 
     const session = event.data.object as Stripe.Checkout.Session;
-    if (session.metadata?.kind !== "founding_member") {
-      return;
-    }
     if (session.payment_status !== "paid") {
       return;
     }
 
-    const email = session.customer_details?.email;
-    const customerId =
-      typeof session.customer === "string"
-        ? session.customer
-        : session.customer?.id;
-
-    if (!email || !customerId) {
-      console.error("[webhook_missing_fields]", {
-        sessionId: session.id,
-        hasEmail: !!email,
-        hasCustomerId: !!customerId,
-      });
-      return;
+    if (session.metadata?.kind === "credit_topup") {
+      await handleCreditTopUp(session);
     }
-
-    await foundingMemberService.recordPayment(email, customerId);
   },
 };
+
+async function handleCreditTopUp(session: Stripe.Checkout.Session): Promise<void> {
+  const userId = session.metadata?.userId;
+  const credits = Number(session.metadata?.credits);
+
+  if (!userId || !Number.isFinite(credits) || credits <= 0) {
+    console.error("[webhook_missing_fields]", {
+      sessionId: session.id,
+      hasUserId: !!userId,
+      credits: session.metadata?.credits,
+    });
+    return;
+  }
+
+  await creditTopUpService.recordPurchase(
+    userId,
+    session.id,
+    credits,
+    session.amount_total ?? 0
+  );
+}

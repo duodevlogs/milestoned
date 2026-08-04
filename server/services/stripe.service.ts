@@ -1,6 +1,7 @@
 import "server-only";
 
 import Stripe from "stripe";
+import { CREDIT_PACKAGES, priceCentsFor, type CreditPackageId } from "@/lib/credit-packages";
 
 /*
  * STRIPE_SECRET_KEY is server-only and read lazily so the app can boot
@@ -21,12 +22,27 @@ function getStripe(): Stripe {
 
 export const stripeService = {
   /**
-   * $7 one-time founding-member checkout. Uses the configured Price when
-   * STRIPE_FOUNDING_MEMBER_PRICE_ID is set, otherwise inline price_data so
-   * no dashboard product setup is needed to test.
+   * One-time credit top-up checkout for an already-authenticated user. The
+   * userId travels in Stripe metadata so the webhook can credit that exact
+   * account directly. isFoundingMember must be resolved server-side by the
+   * caller from the user's verified DB record — never trust client input
+   * for which price to charge.
    */
-  async createFoundingMemberCheckout(origin: string): Promise<string> {
-    const priceId = process.env.STRIPE_FOUNDING_MEMBER_PRICE_ID;
+  async createTopUpCheckout(
+    origin: string,
+    userId: string,
+    packageId: CreditPackageId,
+    isFoundingMember: boolean
+  ): Promise<string> {
+    const pkg = CREDIT_PACKAGES[packageId];
+    const unitAmount = priceCentsFor(pkg, isFoundingMember);
+    const priceId = isFoundingMember
+      ? packageId === "small"
+        ? process.env.STRIPE_TOPUP_SMALL_FOUNDING_PRICE_ID
+        : process.env.STRIPE_TOPUP_LARGE_FOUNDING_PRICE_ID
+      : packageId === "small"
+        ? process.env.STRIPE_TOPUP_SMALL_PRICE_ID
+        : process.env.STRIPE_TOPUP_LARGE_PRICE_ID;
 
     const session = await getStripe().checkout.sessions.create({
       mode: "payment",
@@ -37,19 +53,20 @@ export const stripeService = {
           : {
               price_data: {
                 currency: "usd",
-                unit_amount: 700,
+                unit_amount: unitAmount,
                 product_data: {
-                  name: "Milestoned — Founding Member",
-                  description:
-                    "One-time founding member access. Locked-in price, guaranteed access at launch, generation credits included.",
+                  name: `Milestoned — ${pkg.label}`,
+                  description: isFoundingMember
+                    ? "Generation credits top-up — founding member pricing."
+                    : "Generation credits top-up.",
                 },
               },
               quantity: 1,
             },
       ],
-      metadata: { kind: "founding_member" },
-      success_url: `${origin}/?checkout=success`,
-      cancel_url: `${origin}/?checkout=cancelled`,
+      metadata: { kind: "credit_topup", userId, credits: String(pkg.credits) },
+      success_url: `${origin}/dashboard?topup=success`,
+      cancel_url: `${origin}/dashboard?topup=cancelled`,
     });
 
     if (!session.url) {
