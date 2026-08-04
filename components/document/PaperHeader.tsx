@@ -4,12 +4,17 @@ export function PaperHeader({
   clientName,
   timelineLabel,
   dateLabel,
+  businessName,
+  logoUrl,
 }: {
   docTypeLabel: string;
   projectName: string;
   clientName: string;
   timelineLabel: string;
   dateLabel: string;
+  /** Shown instead of the Milestoned brand mark — see lib/pdf/DocumentPdf.tsx for why. */
+  businessName?: string | null;
+  logoUrl?: string | null;
 }) {
   return (
     <>
@@ -23,7 +28,14 @@ export function PaperHeader({
           </div>
         </div>
         <div className="ml-5 flex-shrink-0 text-right">
-          <div className="font-display text-[13px] font-semibold text-[#14151a]">Milestoned</div>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="" className="ml-auto h-7 w-auto object-contain" />
+          ) : businessName ? (
+            <div className="font-display text-[13px] font-semibold text-[#14151a]">
+              {businessName}
+            </div>
+          ) : null}
           <div className="mt-0.5 text-[10.5px] text-paper-muted">{dateLabel}</div>
         </div>
       </div>

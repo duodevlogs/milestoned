@@ -29,5 +29,17 @@ export const signUpSchema = z.object({
   next: nextPathSchema,
 });
 
+export const updateEmailSchema = z.object({
+  email: emailSchema,
+});
+
+export const updatePasswordSchema = z.object({
+  password: z
+    .string({ message: "Choose a password." })
+    .min(8, "Password must be at least 8 characters."),
+});
+
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
+export type UpdateEmailInput = z.infer<typeof updateEmailSchema>;
+export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>;

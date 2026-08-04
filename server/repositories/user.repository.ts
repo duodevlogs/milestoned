@@ -42,4 +42,44 @@ export const userRepository = {
       .set({ creditsRemaining: sql`${users.creditsRemaining} + 1` })
       .where(eq(users.id, id));
   },
+
+  /** Only touches the fields actually provided — omit a field to leave it unchanged. */
+  async updateBranding(
+    id: string,
+    input: { businessName?: string; logoUrl?: string }
+  ): Promise<void> {
+    const set: Partial<{ businessName: string; logoUrl: string }> = {};
+    if (input.businessName !== undefined) set.businessName = input.businessName;
+    if (input.logoUrl !== undefined) set.logoUrl = input.logoUrl;
+    if (Object.keys(set).length === 0) return;
+
+    const db = getDb();
+    await db.update(users).set(set).where(eq(users.id, id));
+  },
+
+  /** Only touches the fields actually provided — omit a field to leave it unchanged. */
+  async updateBusinessDetails(
+    id: string,
+    input: {
+      businessAddress?: string;
+      taxId?: string;
+      companyRegistration?: string;
+      paymentInstructions?: string;
+    }
+  ): Promise<void> {
+    const set: Partial<{
+      businessAddress: string;
+      taxId: string;
+      companyRegistration: string;
+      paymentInstructions: string;
+    }> = {};
+    if (input.businessAddress !== undefined) set.businessAddress = input.businessAddress;
+    if (input.taxId !== undefined) set.taxId = input.taxId;
+    if (input.companyRegistration !== undefined) set.companyRegistration = input.companyRegistration;
+    if (input.paymentInstructions !== undefined) set.paymentInstructions = input.paymentInstructions;
+    if (Object.keys(set).length === 0) return;
+
+    const db = getDb();
+    await db.update(users).set(set).where(eq(users.id, id));
+  },
 };

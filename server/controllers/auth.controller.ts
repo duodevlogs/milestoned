@@ -6,6 +6,8 @@ import {
   nextPathSchema,
   signInSchema,
   signUpSchema,
+  updateEmailSchema,
+  updatePasswordSchema,
 } from "@/server/validation/auth.schema";
 
 /*
@@ -37,5 +39,15 @@ export const authController = {
 
   async signOut(): Promise<void> {
     await authService.signOut();
+  },
+
+  async updateEmail(raw: unknown): Promise<void> {
+    const input = updateEmailSchema.parse(raw);
+    await authService.updateEmail(input.email);
+  },
+
+  async updatePassword(raw: unknown): Promise<void> {
+    const input = updatePasswordSchema.parse(raw);
+    await authService.updatePassword(input.password);
   },
 };

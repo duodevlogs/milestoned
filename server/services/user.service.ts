@@ -12,4 +12,23 @@ export const userService = {
   async getProfile(userId: string): Promise<User | null> {
     return userRepository.findById(userId);
   },
+
+  async updateBranding(
+    userId: string,
+    input: { businessName?: string; logoUrl?: string }
+  ): Promise<void> {
+    await userRepository.updateBranding(userId, input);
+  },
+
+  async updateBusinessDetails(
+    userId: string,
+    input: {
+      businessAddress?: string;
+      taxId?: string;
+      companyRegistration?: string;
+      paymentInstructions?: string;
+    }
+  ): Promise<void> {
+    await userRepository.updateBusinessDetails(userId, input);
+  },
 };

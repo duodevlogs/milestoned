@@ -1,6 +1,6 @@
 import "server-only";
 
-import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import {
   formatCurrency,
   formatTimelineLabel,
@@ -78,6 +78,12 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     textAlign: "right",
     marginTop: 2,
+  },
+  logo: {
+    height: 26,
+    maxWidth: 120,
+    objectFit: "contain",
+    marginLeft: "auto",
   },
   metaRow: {
     flexDirection: "row",
@@ -212,9 +218,16 @@ const styles = StyleSheet.create({
 export function DocumentPdf({
   content,
   generatedAt,
+  businessName,
+  logoUrl,
 }: {
   content: GeneratedDocumentContent;
   generatedAt: string;
+  /** Shown instead of the Milestoned brand mark — the document represents
+   *  the customer's business to their own client, not ours. Neither set
+   *  means the header simply shows no brand mark at all. */
+  businessName?: string | null;
+  logoUrl?: string | null;
 }) {
   // sections is always [Parties & Purpose, Scope of Work, ...clauses,
   // Acceptance] — Acceptance is always appended last by the generation
@@ -236,7 +249,14 @@ export function DocumentPdf({
             <Text style={styles.projectName}>{content.projectName || "Untitled project"}</Text>
           </View>
           <View>
-            <Text style={styles.brand}>Milestoned</Text>
+            {logoUrl ? (
+              // react-pdf's Image is a PDF-embed primitive, not an HTML img
+              // element — it has no alt prop, this isn't an a11y concern.
+              // eslint-disable-next-line jsx-a11y/alt-text
+              <Image src={logoUrl} style={styles.logo} />
+            ) : businessName ? (
+              <Text style={styles.brand}>{businessName}</Text>
+            ) : null}
             <Text style={styles.brandDate}>{dateLabel}</Text>
           </View>
         </View>

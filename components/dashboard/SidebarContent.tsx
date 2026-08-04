@@ -45,10 +45,8 @@ function SettingsIcon() {
 }
 
 /*
- * Templates/Clients/Account settings and "Top up credits" aren't in the
- * 8-phase build plan (top-up is Phase 7; the other three aren't scoped at
- * all), so they're rendered as inert, dimmed items rather than dead links —
- * matches the design visually without implying a feature that isn't there.
+ * Templates/Clients/Account settings (Phase 9) and "Top up credits"
+ * (Phase 7) are all real links now.
  *
  * Rendered via a Fragment (no wrapping element) so it drops straight into
  * whichever flex-col parent hosts it — the desktop <aside> or the mobile
@@ -85,18 +83,30 @@ export function SidebarContent({
           <DocumentsIcon />
           Documents
         </Link>
-        <span className="flex cursor-default items-center gap-[11px] rounded-lg px-2.5 py-[9px] text-sm font-[450] text-fg-secondary opacity-60">
+        <Link
+          href="/templates"
+          onClick={onNavigate}
+          className="flex items-center gap-[11px] rounded-lg px-2.5 py-[9px] text-sm font-[450] text-fg-secondary transition-colors hover:bg-white/[0.03] hover:text-fg-bright"
+        >
           <TemplatesIcon />
           Templates
-        </span>
-        <span className="flex cursor-default items-center gap-[11px] rounded-lg px-2.5 py-[9px] text-sm font-[450] text-fg-secondary opacity-60">
+        </Link>
+        <Link
+          href="/clients"
+          onClick={onNavigate}
+          className="flex items-center gap-[11px] rounded-lg px-2.5 py-[9px] text-sm font-[450] text-fg-secondary transition-colors hover:bg-white/[0.03] hover:text-fg-bright"
+        >
           <ClientsIcon />
           Clients
-        </span>
-        <span className="flex cursor-default items-center gap-[11px] rounded-lg px-2.5 py-[9px] text-sm font-[450] text-fg-secondary opacity-60">
+        </Link>
+        <Link
+          href="/account"
+          onClick={onNavigate}
+          className="flex items-center gap-[11px] rounded-lg px-2.5 py-[9px] text-sm font-[450] text-fg-secondary transition-colors hover:bg-white/[0.03] hover:text-fg-bright"
+        >
           <SettingsIcon />
           Account settings
-        </span>
+        </Link>
       </nav>
 
       <div className="mt-auto rounded-[11px] border border-line-soft bg-white/[0.015] p-3.5">
@@ -109,9 +119,13 @@ export function SidebarContent({
         <div className="mb-[11px] h-[5px] overflow-hidden rounded-full bg-white/[0.08]">
           <div className="h-full rounded-full bg-gold" style={{ width: `${pct}%` }} />
         </div>
-        <span className="block cursor-default rounded-lg border border-gold-soft py-1.5 text-center text-[13px] font-medium text-gold opacity-70">
+        <Link
+          href="/top-up"
+          onClick={onNavigate}
+          className="block rounded-lg border border-gold-soft py-1.5 text-center text-[13px] font-medium text-gold"
+        >
           Top up credits
-        </span>
+        </Link>
       </div>
     </>
   );
