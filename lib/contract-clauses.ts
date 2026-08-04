@@ -182,6 +182,15 @@ export const ACCEPTANCE_CLAUSE = {
 export const LEGAL_DISCLAIMER =
   "This document is a drafting aid, not legal advice. It has not been reviewed by a licensed attorney. For cross-border engagements or higher-value contracts, have it reviewed by a qualified lawyer before signing.";
 
+/** Short labels for the opted-in clauses — used to display a clause bundle without rendering full section text. */
+export function summarizeClauseSelection(selection: ClauseSelection): string[] {
+  const labels = CLAUSE_FIELDS.filter((field) => selection[field.id]).map((field) => field.label);
+  if (selection.customClause && selection.customClauseText.trim()) {
+    labels.push(selection.customClauseTitle.trim() || "Additional Terms");
+  }
+  return labels;
+}
+
 /** Builds the ordered list of opted-in clause sections. Fully deterministic — no AI call. */
 export function buildClauseSections(selection: ClauseSelection): { title: string; body: string }[] {
   const sections: { title: string; body: string }[] = [];

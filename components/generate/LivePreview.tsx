@@ -25,6 +25,8 @@ export function LivePreview({
   deliveryDate,
   clauses,
   generated,
+  businessName,
+  logoUrl,
 }: {
   docType: DocType;
   clientName: string;
@@ -37,6 +39,8 @@ export function LivePreview({
   deliveryDate: string;
   clauses: ClauseSelection;
   generated: GeneratedDocumentContent | null;
+  businessName?: string | null;
+  logoUrl?: string | null;
 }) {
   const { ref: paperRef, pagination } = useA4Pagination<HTMLDivElement>();
 
@@ -97,6 +101,8 @@ export function LivePreview({
             clientName={clientName}
             timelineLabel={formatTimelineLabel(startDate, deliveryDate)}
             dateLabel={today}
+            businessName={businessName}
+            logoUrl={logoUrl}
           />
 
           <div className="mb-[26px]">

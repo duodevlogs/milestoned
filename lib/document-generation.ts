@@ -2,6 +2,7 @@
  * Shared between client (Zustand store, live preview) and server (generation
  * service) — pure types + formatting, no secrets, no "server-only" import.
  */
+import type { ClauseSelection } from "@/lib/contract-clauses";
 
 export type DocType = "sow" | "contract" | "proposal" | "invoice";
 
@@ -28,6 +29,14 @@ export interface GeneratedDocumentContent {
    * time (index + 1), not baked into the stored title strings.
    */
   sections: { title: string; body: string }[];
+  /**
+   * The clause selection used to generate `sections` (checkboxes + typed
+   * inputs) — kept alongside the rendered {title,body} text so a document
+   * can be cloned into a template with its original selection intact, not
+   * just its rendered prose. Optional since documents generated before this
+   * field existed won't have it.
+   */
+  clauses?: ClauseSelection;
   generatedAt: string;
 }
 

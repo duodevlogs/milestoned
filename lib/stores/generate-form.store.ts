@@ -29,6 +29,7 @@ interface GenerateFormState {
   step: number;
   docType: DocType;
   clientName: string;
+  clientId: string | null;
   projectName: string;
   budget: string;
   scope: string;
@@ -43,12 +44,23 @@ interface GenerateFormState {
 
   setDocType: (docType: DocType) => void;
   setField: (field: TextField, value: string) => void;
+  /** Sets clientName+clientId together (picking a saved client); pass null to clear back to free-hand typing. */
+  selectClient: (client: { id: string; name: string } | null) => void;
   setMilestoneLabel: (index: number, value: string) => void;
   setMilestonePct: (index: number, value: string) => void;
   addMilestone: () => void;
   removeMilestone: (index: number) => void;
   toggleClause: (id: keyof ClauseSelection) => void;
   setClauseField: (key: keyof ClauseSelection, value: string) => void;
+  /** Applies a clause bundle's selection as-is, replacing the current clauses. */
+  applyBundle: (clauses: ClauseSelection) => void;
+  /** Hydrates docType/scope/deliverables/clauses from a saved template/preset. */
+  applyTemplate: (template: {
+    docType: DocType;
+    scope: string;
+    deliverables: string;
+    clauses: ClauseSelection;
+  }) => void;
   goToStep: (step: number) => void;
   next: () => void;
   back: () => void;
@@ -59,6 +71,7 @@ export const useGenerateFormStore = create<GenerateFormState>((set) => ({
   step: 0,
   docType: "contract",
   clientName: "",
+  clientId: null,
   projectName: "",
   budget: "",
   scope: "",
@@ -72,7 +85,24 @@ export const useGenerateFormStore = create<GenerateFormState>((set) => ({
 
   setDocType: (docType) =>
     set({ docType, clauses: defaultClauseSelection(docType), generated: null }),
-  setField: (field, value) => set({ [field]: value, generated: null }),
+  setField: (field, value) =>
+    set({
+      [field]: value,
+      // Typing the client name manually means it's no longer exactly the
+      // picked client (if any) — clear the link so a stale clientId never
+      // rides along with an edited name.
+      ...(field === "clientName" ? { clientId: null } : {}),
+      generated: null,
+    }),
+  selectClient: (client) =>
+    set({
+      clientId: client?.id ?? null,
+      clientName: client?.name ?? "",
+      generated: null,
+    }),
+  applyBundle: (clauses) => set({ clauses, generated: null }),
+  applyTemplate: ({ docType, scope, deliverables, clauses }) =>
+    set({ docType, scope, deliverables, clauses, generated: null }),
   setMilestoneLabel: (index, value) =>
     set((s) => ({
       milestones: s.milestones.map((m, i) => (i === index ? { ...m, label: value } : m)),

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useGenerateFormStore } from "@/lib/stores/generate-form.store";
 import { StepIndicator } from "./StepIndicator";
 import { DocTypeStep } from "./steps/DocTypeStep";
@@ -11,6 +12,9 @@ import { ClausesStep } from "./steps/ClausesStep";
 import { MilestonesStep } from "./steps/MilestonesStep";
 import { LivePreview } from "./LivePreview";
 import type { GeneratedDocumentContent } from "@/lib/document-generation";
+import type { ClauseSelection } from "@/lib/contract-clauses";
+import type { ClauseBundle, Template } from "@/server/db/schema";
+import type { ClientWithDocumentCount } from "@/server/services/client.service";
 
 const LAST_STEP = 4;
 
@@ -46,11 +50,26 @@ interface GenerateApiSuccess {
   creditsRemaining: number;
 }
 
-export function GenerateFlow({ initialCredits }: { initialCredits: number }) {
+export function GenerateFlow({
+  initialCredits,
+  clients,
+  bundles,
+  initialTemplate,
+  businessName,
+  logoUrl,
+}: {
+  initialCredits: number;
+  clients: ClientWithDocumentCount[];
+  bundles: ClauseBundle[];
+  initialTemplate: Template | null;
+  businessName?: string | null;
+  logoUrl?: string | null;
+}) {
   const {
     step,
     docType,
     clientName,
+    clientId,
     projectName,
     budget,
     scope,
@@ -63,20 +82,38 @@ export function GenerateFlow({ initialCredits }: { initialCredits: number }) {
     generatedDocumentId,
     setDocType,
     setField,
+    selectClient,
     setMilestoneLabel,
     setMilestonePct,
     addMilestone,
     removeMilestone,
     toggleClause,
     setClauseField,
+    applyBundle,
+    applyTemplate,
     next,
     back,
     setGenerated,
   } = useGenerateFormStore();
 
+  const router = useRouter();
   const [creditsRemaining, setCreditsRemaining] = useState(initialCredits);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Hydrate the wizard from a saved template exactly once on mount, when
+  // opened as /generate?template=<id> (e.g. from the Templates page's "Use"
+  // link) — deliberately not re-applying on every render/re-fetch.
+  useEffect(() => {
+    if (!initialTemplate) return;
+    applyTemplate({
+      docType: initialTemplate.docType,
+      scope: initialTemplate.scope,
+      deliverables: initialTemplate.deliverables,
+      clauses: initialTemplate.clauseSelection as ClauseSelection,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const totalPct = milestones.reduce((sum, m) => sum + (Number(m.pct) || 0), 0);
   const requiredFieldsMissing =
@@ -95,6 +132,7 @@ export function GenerateFlow({ initialCredits }: { initialCredits: number }) {
         body: JSON.stringify({
           docType,
           clientName,
+          clientId,
           projectName,
           budget: Number(budget) || 0,
           scope,
@@ -117,6 +155,24 @@ export function GenerateFlow({ initialCredits }: { initialCredits: number }) {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  async function handleSaveBundle(name: string) {
+    const res = await fetch("/api/clause-bundles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, clauses }),
+    });
+    if (!res.ok) throw new Error("Failed to save bundle");
+  }
+
+  async function handleSavePreset(name: string) {
+    const res = await fetch("/api/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, docType, scope, deliverables, clauses }),
+    });
+    if (!res.ok) throw new Error("Failed to save preset");
   }
 
   function handlePrimary() {
@@ -165,13 +221,30 @@ export function GenerateFlow({ initialCredits }: { initialCredits: number }) {
               <div className="text-sm leading-[1.5] text-fg-tertiary">{STEP_META[step].hint}</div>
             </div>
 
-            {step === 0 && <DocTypeStep docType={docType} onSelect={setDocType} />}
+            {step === 0 && (
+              <DocTypeStep
+                docType={docType}
+                onSelect={(dt) => {
+                  // Invoices have their own dedicated flow (separate content
+                  // shape from Contract/SOW/Proposal) — divert immediately
+                  // rather than continuing this contract-shaped wizard.
+                  if (dt === "invoice") {
+                    router.push("/generate/invoice");
+                    return;
+                  }
+                  setDocType(dt);
+                }}
+              />
+            )}
             {step === 1 && (
               <ProjectDetailsStep
                 clientName={clientName}
+                clientId={clientId}
+                clients={clients}
                 projectName={projectName}
                 budget={budget}
                 onClientName={(v) => setField("clientName", v)}
+                onSelectClient={selectClient}
                 onProjectName={(v) => setField("projectName", v)}
                 onBudget={(v) => setField("budget", v)}
               />
@@ -185,7 +258,15 @@ export function GenerateFlow({ initialCredits }: { initialCredits: number }) {
               />
             )}
             {step === 3 && (
-              <ClausesStep clauses={clauses} onToggle={toggleClause} onFieldChange={setClauseField} />
+              <ClausesStep
+                clauses={clauses}
+                bundles={bundles}
+                onToggle={toggleClause}
+                onFieldChange={setClauseField}
+                onApplyBundle={applyBundle}
+                onSaveBundle={handleSaveBundle}
+                onSavePreset={handleSavePreset}
+              />
             )}
             {step === 4 && (
               <MilestonesStep
@@ -273,6 +354,8 @@ export function GenerateFlow({ initialCredits }: { initialCredits: number }) {
           deliveryDate={deliveryDate}
           clauses={clauses}
           generated={generated}
+          businessName={businessName}
+          logoUrl={logoUrl}
         />
       </div>
     </div>
