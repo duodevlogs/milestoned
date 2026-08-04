@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { authService } from "@/server/services/auth.service";
 import { documentService } from "@/server/services/document.service";
+import { appSettingsService } from "@/server/services/app-settings.service";
 import { DocumentView } from "@/components/document/DocumentView";
-import type { GeneratedDocumentContent } from "@/lib/document-generation";
+import type { DocType } from "@/lib/document-generation";
 
 export default async function DocumentPage({
   params,
@@ -14,6 +15,9 @@ export default async function DocumentPage({
   const user = await authService.getUser();
   if (!user) {
     redirect("/login");
+  }
+  if (await appSettingsService.isPrelaunch()) {
+    redirect("/welcome");
   }
 
   // Ownership + existence are both enforced inside getForUser; any failure
@@ -28,7 +32,7 @@ export default async function DocumentPage({
     <DocumentView
       documentId={document.id}
       status={document.status}
-      content={document.content as GeneratedDocumentContent}
+      content={document.content as { docType: DocType; projectName: string }}
     />
   );
 }

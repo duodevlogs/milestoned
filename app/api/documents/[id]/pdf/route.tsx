@@ -8,10 +8,13 @@
  */
 import { renderToBuffer } from "@react-pdf/renderer";
 import { authService } from "@/server/services/auth.service";
+import { userService } from "@/server/services/user.service";
 import { documentController } from "@/server/controllers/document.controller";
 import { DocumentPdf } from "@/lib/pdf/DocumentPdf";
+import { InvoicePdf } from "@/lib/pdf/InvoicePdf";
 import { AppError, jsonError } from "@/server/errors";
 import type { GeneratedDocumentContent } from "@/lib/document-generation";
+import type { InvoiceContent } from "@/lib/invoice-generation";
 
 export async function GET(
   _request: Request,
@@ -24,11 +27,26 @@ export async function GET(
     }
 
     const { id } = await params;
-    const document = await documentController.getForUser(user.id, id);
-    const content = document.content as GeneratedDocumentContent;
+    const [document, profile] = await Promise.all([
+      documentController.getForUser(user.id, id),
+      userService.getProfile(user.id),
+    ]);
 
     const buffer = await renderToBuffer(
-      <DocumentPdf content={content} generatedAt={document.createdAt.toISOString()} />
+      document.docType === "invoice" ? (
+        <InvoicePdf
+          content={document.content as InvoiceContent}
+          businessName={profile?.businessName}
+          logoUrl={profile?.logoUrl}
+        />
+      ) : (
+        <DocumentPdf
+          content={document.content as GeneratedDocumentContent}
+          generatedAt={document.createdAt.toISOString()}
+          businessName={profile?.businessName}
+          logoUrl={profile?.logoUrl}
+        />
+      )
     );
 
     const safeName = document.projectName.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "") || "document";

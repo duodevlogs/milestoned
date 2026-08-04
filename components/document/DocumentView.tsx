@@ -3,8 +3,9 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { DOC_TYPE_META } from "@/lib/document-display";
-import type { GeneratedDocumentContent } from "@/lib/document-generation";
+import type { DocType } from "@/lib/document-generation";
 import { StatusSelect } from "@/components/dashboard/StatusSelect";
+import { SaveAsTemplateButton } from "@/components/document/SaveAsTemplateButton";
 import type { DocumentStatus } from "@/server/db/schema";
 
 // pdfjs-dist touches browser-only globals (DOMMatrix) at module-eval time,
@@ -22,7 +23,10 @@ export function DocumentView({
 }: {
   documentId: string;
   status: DocumentStatus;
-  content: GeneratedDocumentContent;
+  // Only docType/projectName are used here — shared by every content shape
+  // (Contract/SOW/Proposal's GeneratedDocumentContent and Invoice's
+  // InvoiceContent alike), so this view stays doc-type-agnostic.
+  content: { docType: DocType; projectName: string };
 }) {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-navy text-fg">
@@ -50,6 +54,7 @@ export function DocumentView({
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <StatusSelect documentId={documentId} status={status} />
+          <SaveAsTemplateButton documentId={documentId} />
           <a
             href={`/api/documents/${documentId}/pdf`}
             className="inline-flex items-center gap-2 rounded-[10px] border-none bg-gold px-[18px] py-2.5 font-display text-[13.5px] font-semibold text-gold-contrast shadow-[0_1px_0_rgba(255,255,255,0.15)_inset] transition-transform hover:-translate-y-px"
