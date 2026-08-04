@@ -1,27 +1,8 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/LogoMark";
 import { DocPreviewCard } from "@/components/landing/DocPreviewCard";
-
-const PERKS = [
-  "Locked-in founding price",
-  "Guaranteed access at launch",
-  "Generation credits included",
-];
-
-const BANNERS: Record<string, { text: string; tone: "ok" | "warn" }> = {
-  success: {
-    text: "Payment received. Check your inbox — we've sent your founding-member confirmation.",
-    tone: "ok",
-  },
-  cancelled: {
-    text: "Checkout cancelled. You can become a founding member whenever you're ready.",
-    tone: "warn",
-  },
-  error: {
-    text: "Something went wrong starting checkout. Please try again.",
-    tone: "warn",
-  },
-};
+import { appSettingsService } from "@/server/services/app-settings.service";
+import { CREDIT_PACKAGES, formatPackagePrice } from "@/lib/credit-packages";
 
 function CheckIcon() {
   return (
@@ -37,15 +18,12 @@ function CheckIcon() {
   );
 }
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const params = await searchParams;
-  const checkout =
-    typeof params.checkout === "string" ? params.checkout : null;
-  const banner = checkout ? BANNERS[checkout] : null;
+export default async function Home() {
+  const isPrelaunch = await appSettingsService.isPrelaunch();
+
+  const perks = isPrelaunch
+    ? ["Free to sign up", "$3.50/$6 pricing locked in forever", "No charge until you generate"]
+    : ["Free to sign up", "Pay only for what you generate", "Credits never expire"];
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-navy text-fg">
@@ -65,26 +43,16 @@ export default async function Home({
           </Link>
         </header>
 
-        {banner && (
-          <div
-            className={`mb-2 rounded-[11px] border px-4 py-3.5 text-sm leading-[1.5] ${
-              banner.tone === "ok"
-                ? "border-gold-border bg-gold-soft text-fg-label"
-                : "border-line-strong bg-white/[0.02] text-fg-soft"
-            }`}
-          >
-            {banner.text}
-          </div>
-        )}
-
-        <main className="flex flex-wrap items-center gap-[72px] pb-24 pt-[72px]">
+        <main className="flex flex-wrap items-center gap-[72px] pb-24 pt-[56px]">
           <div className="min-w-[320px] flex-[1_1_460px]">
-            <div className="mb-[30px] inline-flex items-center gap-[9px] rounded-full border border-white/[0.09] bg-white/[0.02] py-1.5 pl-[11px] pr-[13px]">
-              <span className="h-1.5 w-1.5 animate-ms-pulse rounded-full bg-gold" />
-              <span className="text-[13px] font-medium tracking-[0.01em] text-fg-soft">
-                Now inviting founding members
-              </span>
-            </div>
+            {isPrelaunch && (
+              <div className="mb-[30px] inline-flex items-center gap-[9px] rounded-full border border-white/[0.09] bg-white/[0.02] py-1.5 pl-[11px] pr-[13px]">
+                <span className="h-1.5 w-1.5 animate-ms-pulse rounded-full bg-gold" />
+                <span className="text-[13px] font-medium tracking-[0.01em] text-fg-soft">
+                  Pre-launch — sign up free, lock in founding pricing
+                </span>
+              </div>
+            )}
 
             <h1 className="mb-[26px] font-display text-[clamp(2.4rem,4.6vw,3.5rem)] font-semibold leading-[1.06] tracking-[-0.025em] text-fg-heading text-balance">
               You lose a day to paperwork
@@ -102,25 +70,24 @@ export default async function Home({
             </p>
 
             <div className="flex flex-col items-start gap-[18px]">
-              <form action="/api/checkout/founding-member" method="POST">
-                <button
-                  type="submit"
-                  className="inline-flex cursor-pointer items-center gap-[11px] rounded-[11px] bg-gold px-[26px] py-4 font-display text-[1.02rem] font-semibold tracking-[-0.005em] text-gold-contrast shadow-[0_1px_0_rgba(255,255,255,0.15)_inset,0_8px_24px_rgba(0,0,0,0.35)] transition-transform duration-150 hover:-translate-y-px"
-                >
-                  Become a Founding Member — $7
-                  <span className="translate-y-[0.5px] text-[1.1em] leading-none">
-                    →
-                  </span>
-                </button>
-              </form>
+              <Link
+                href={
+                  isPrelaunch
+                    ? "/login?mode=signup&next=%2Fwelcome"
+                    : "/login?mode=signup"
+                }
+                className="inline-flex cursor-pointer items-center gap-[11px] rounded-[11px] bg-gold px-[26px] py-4 font-display text-[1.02rem] font-semibold tracking-[-0.005em] text-gold-contrast shadow-[0_1px_0_rgba(255,255,255,0.15)_inset,0_8px_24px_rgba(0,0,0,0.35)] transition-transform duration-150 hover:-translate-y-px"
+              >
+                {isPrelaunch ? "Sign up free — lock in founding pricing" : "Sign up free"}
+                <span className="translate-y-[0.5px] text-[1.1em] leading-none">→</span>
+              </Link>
               <span className="text-[13.5px] text-fg-muted">
-                One-time — no subscription until launch. Secure checkout via
-                Stripe.
+                No payment required to sign up. You only pay when you generate documents.
               </span>
             </div>
 
             <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2.5 border-t border-line-faint pt-8">
-              {PERKS.map((perk) => (
+              {perks.map((perk) => (
                 <div key={perk} className="flex items-center gap-[9px]">
                   <span className="inline-flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-full bg-gold-soft text-gold">
                     <CheckIcon />
@@ -136,13 +103,88 @@ export default async function Home({
           </div>
         </main>
 
+        <PricingSection isPrelaunch={isPrelaunch} />
+
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line-faint pb-10 pt-6">
           <span className="text-[13px] text-fg-muted">© 2026 Milestoned</span>
-          <span className="text-[13px] text-fg-muted">
-            Built for people who ship client work.
-          </span>
+          <div className="flex items-center gap-5">
+            <Link href="/impressum" className="text-[13px] text-fg-muted">
+              Impressum
+            </Link>
+            <Link href="/privacy" className="text-[13px] text-fg-muted">
+              Privacy
+            </Link>
+            <Link href="/terms" className="text-[13px] text-fg-muted">
+              Terms
+            </Link>
+            <span className="text-[13px] text-fg-muted">
+              Built for people who ship client work.
+            </span>
+          </div>
         </footer>
       </div>
     </div>
+  );
+}
+
+function PricingSection({ isPrelaunch }: { isPrelaunch: boolean }) {
+  const small = CREDIT_PACKAGES.small;
+  const large = CREDIT_PACKAGES.large;
+
+  return (
+    <section className="border-t border-line-faint py-16">
+      <div className="mx-auto max-w-[720px] text-center">
+        <span className="text-xs font-semibold uppercase tracking-[0.06em] text-fg-muted">
+          Pricing
+        </span>
+        <h2 className="mb-3 mt-2 font-display text-[1.7rem] font-semibold tracking-[-0.015em] text-fg-heading">
+          Pay per document, not per month
+        </h2>
+        <p className="mx-auto mb-10 max-w-[520px] text-[1.02rem] leading-[1.6] text-fg-secondary">
+          There&apos;s no subscription. One credit generates one document, credits
+          never expire, and you buy more only when you actually need them.
+        </p>
+      </div>
+
+      <div className="mx-auto grid max-w-[720px] grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-[16px] border border-line-soft bg-white/[0.015] p-6">
+          <div className="mb-1 text-sm font-medium text-fg-tertiary">10 credits</div>
+          <div className="mb-4 flex items-baseline gap-2">
+            <span className="font-display text-2xl font-semibold text-fg-heading">
+              {formatPackagePrice(small.regularPriceCents)}
+            </span>
+            {isPrelaunch && (
+              <span className="text-sm text-fg-muted">
+                or {formatPackagePrice(small.foundingPriceCents)} as a founding member
+              </span>
+            )}
+          </div>
+          <div className="text-[13.5px] text-fg-tertiary">Standard rate, after launch</div>
+        </div>
+        <div className="rounded-[16px] border border-gold-soft bg-gold-soft p-6">
+          <div className="mb-1 text-sm font-medium text-fg-tertiary">20 credits</div>
+          <div className="mb-4 flex items-baseline gap-2">
+            <span className="font-display text-2xl font-semibold text-fg-heading">
+              {formatPackagePrice(large.regularPriceCents)}
+            </span>
+            {isPrelaunch && (
+              <span className="text-sm text-fg-muted">
+                or {formatPackagePrice(large.foundingPriceCents)} as a founding member
+              </span>
+            )}
+          </div>
+          <div className="text-[13.5px] text-fg-tertiary">Standard rate, after launch</div>
+        </div>
+      </div>
+
+      {isPrelaunch && (
+        <p className="mx-auto mt-8 max-w-[560px] text-center text-sm leading-[1.6] text-fg-tertiary">
+          Sign up before launch and you&apos;re a founding member —{" "}
+          {formatPackagePrice(small.foundingPriceCents)} for 10 credits and{" "}
+          {formatPackagePrice(large.foundingPriceCents)} for 20, locked in for as long as you
+          have an account. After launch, new signups pay the standard rate above.
+        </p>
+      )}
+    </section>
   );
 }

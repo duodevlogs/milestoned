@@ -53,6 +53,27 @@ export const authService = {
     await supabase.auth.signOut();
   },
 
+  /**
+   * Supabase sends a confirmation link to the NEW address before the email
+   * actually changes — this call succeeding means "confirmation sent", not
+   * "email changed yet".
+   */
+  async updateEmail(email: string): Promise<void> {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.updateUser({ email });
+    if (error) {
+      throw new AppError(error.message, 400, "update_email_failed");
+    }
+  },
+
+  async updatePassword(password: string): Promise<void> {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      throw new AppError(error.message, 400, "update_password_failed");
+    }
+  },
+
   /** The verified user for the current request, or null. */
   async getUser() {
     const supabase = await createClient();

@@ -42,6 +42,9 @@ export const clauseSelectionSchema = z
 export const generateDocumentSchema = z.object({
   docType: z.enum(["sow", "contract", "proposal", "invoice"]),
   clientName: z.string().trim().min(1, "Client name is required."),
+  // Optional link to a saved client — set when picked from the client list
+  // in the Project Details step, null when typed free-hand.
+  clientId: z.uuid().optional().nullable(),
   projectName: z.string().trim().min(1, "Project name is required."),
   budget: z.number().positive("Total project value must be greater than 0."),
   scope: z.string().trim().min(1, "Project scope is required."),

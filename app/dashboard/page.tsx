@@ -8,13 +8,40 @@ import { signOut } from "@/app/login/actions";
 import { authService } from "@/server/services/auth.service";
 import { userService } from "@/server/services/user.service";
 import { documentService } from "@/server/services/document.service";
+import { appSettingsService } from "@/server/services/app-settings.service";
 import { greetingForHour, displayNameFromEmail, initialsFromName } from "@/lib/user-display";
 
-export default async function DashboardPage() {
+const TOPUP_BANNERS: Record<string, { text: string; tone: "ok" | "warn" }> = {
+  success: {
+    text: "Payment received. Your credits have been added.",
+    tone: "ok",
+  },
+  cancelled: {
+    text: "Checkout cancelled. You can top up whenever you're ready.",
+    tone: "warn",
+  },
+  error: {
+    text: "Something went wrong starting checkout. Please try again.",
+    tone: "warn",
+  },
+};
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const user = await authService.getUser();
   if (!user) {
     redirect("/login");
   }
+  if (await appSettingsService.isPrelaunch()) {
+    redirect("/welcome");
+  }
+
+  const params = await searchParams;
+  const topup = typeof params.topup === "string" ? params.topup : null;
+  const banner = topup ? TOPUP_BANNERS[topup] : null;
 
   const [profile, documents] = await Promise.all([
     userService.getProfile(user.id),
@@ -57,6 +84,18 @@ export default async function DashboardPage() {
         </header>
 
         <div className="w-full max-w-[1080px] px-4 pb-10 pt-6 sm:px-6 md:px-10 md:pb-[60px] md:pt-9">
+          {banner && (
+            <div
+              className={`mb-6 rounded-[11px] border px-4 py-3.5 text-sm leading-[1.5] ${
+                banner.tone === "ok"
+                  ? "border-gold-border bg-gold-soft text-fg-label"
+                  : "border-line-strong bg-white/[0.02] text-fg-soft"
+              }`}
+            >
+              {banner.text}
+            </div>
+          )}
+
           <div className="mb-8 flex flex-col items-stretch gap-4 sm:flex-row sm:flex-wrap md:mb-10">
             <div className="flex min-w-[260px] flex-[1_1_340px] items-center justify-between gap-4 rounded-[14px] border border-line-soft bg-white/[0.015] px-5 py-5 sm:gap-5 sm:px-7 sm:py-6">
               <div>

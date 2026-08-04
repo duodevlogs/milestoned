@@ -15,10 +15,25 @@ const ibmPlexSans = IBM_Plex_Sans({
   variable: "--font-ibm-plex",
 });
 
+const TITLE = "Milestoned — client documents for dev consultants";
+const DESCRIPTION =
+  "Scope of Work, Contract, Proposal, and Invoice — drafted for web dev consultants, with milestone-based, interest-free payment terms built in.";
+
 export const metadata: Metadata = {
-  title: "Milestoned — client documents for dev consultants",
-  description:
-    "Scope of Work, Contract, Proposal, and Invoice — drafted for web dev consultants, with milestone-based, interest-free payment terms built in.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    siteName: "Milestoned",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
