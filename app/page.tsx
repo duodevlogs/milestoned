@@ -3,6 +3,9 @@ import { connection } from "next/server";
 import { LogoMark } from "@/components/LogoMark";
 import { DocPreviewCard } from "@/components/landing/DocPreviewCard";
 import { appSettingsService } from "@/server/services/app-settings.service";
+import { authService } from "@/server/services/auth.service";
+import { signOut } from "@/app/login/actions";
+import { initialsFromName, displayNameFromEmail } from "@/lib/user-display";
 import { CREDIT_PACKAGES, formatPackagePrice } from "@/lib/credit-packages";
 
 function CheckIcon() {
@@ -27,7 +30,11 @@ export default async function Home() {
   // static page that a later launch-state flip couldn't update without a
   // fresh deploy.
   await connection();
-  const isPrelaunch = await appSettingsService.isPrelaunch();
+  const [isPrelaunch, user] = await Promise.all([
+    appSettingsService.isPrelaunch(),
+    authService.getUser(),
+  ]);
+  const initials = user ? initialsFromName(displayNameFromEmail(user.email ?? "")) : null;
 
   const perks = isPrelaunch
     ? ["Free to sign up", "$3.50/$6 pricing locked in forever", "No charge until you generate"]
@@ -46,9 +53,22 @@ export default async function Home() {
               Milestoned
             </span>
           </div>
-          <Link href="/login" className="text-[14.5px] font-[450] text-fg-tertiary">
-            Sign in
-          </Link>
+          {initials ? (
+            <form action={signOut}>
+              <button
+                type="submit"
+                title="Sign out"
+                aria-label="Sign out"
+                className="flex h-[34px] w-[34px] shrink-0 cursor-pointer items-center justify-center rounded-[9px] border border-white/[0.09] bg-white/[0.02] font-display text-[13px] font-semibold text-fg-label"
+              >
+                {initials}
+              </button>
+            </form>
+          ) : (
+            <Link href="/login" className="text-[14.5px] font-[450] text-fg-tertiary">
+              Sign in
+            </Link>
+          )}
         </header>
 
         <main className="flex flex-wrap items-center gap-[72px] pb-24 pt-[56px]">

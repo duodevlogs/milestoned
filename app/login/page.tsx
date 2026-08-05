@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/LogoMark";
+import { SubmitButton } from "@/components/SubmitButton";
 import { signIn, signUp } from "./actions";
 
 export default async function LoginPage({
@@ -83,12 +84,12 @@ export default async function LoginPage({
                 </div>
               )}
 
-              <button
-                type="submit"
-                className="mt-1 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-[10px] border-none bg-gold px-[22px] py-3 font-display text-[15px] font-semibold text-gold-contrast shadow-[0_1px_0_rgba(255,255,255,0.15)_inset]"
+              <SubmitButton
+                pendingText={mode === "signup" ? "Creating account…" : "Signing in…"}
+                className="mt-1 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-[10px] border-none bg-gold px-[22px] py-3 font-display text-[15px] font-semibold text-gold-contrast shadow-[0_1px_0_rgba(255,255,255,0.15)_inset] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {mode === "signup" ? "Create account" : "Sign in"}
-              </button>
+              </SubmitButton>
             </form>
           )}
         </div>
