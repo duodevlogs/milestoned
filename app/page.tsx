@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { LogoMark } from "@/components/LogoMark";
 import { DocPreviewCard } from "@/components/landing/DocPreviewCard";
 import { appSettingsService } from "@/server/services/app-settings.service";
@@ -19,6 +20,13 @@ function CheckIcon() {
 }
 
 export default async function Home() {
+  // Reads live launch state on every request — without this, Next tries to
+  // statically prerender "/" at build time (no cookies()/headers() usage to
+  // force dynamic rendering on its own), which both fails when DATABASE_URL
+  // isn't set at build time AND would freeze prelaunch copy/pricing into a
+  // static page that a later launch-state flip couldn't update without a
+  // fresh deploy.
+  await connection();
   const isPrelaunch = await appSettingsService.isPrelaunch();
 
   const perks = isPrelaunch
