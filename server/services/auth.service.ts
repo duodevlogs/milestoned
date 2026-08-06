@@ -26,13 +26,26 @@ export const authService = {
     emailRedirectTo: string
   ): Promise<void> {
     const supabase = await createClient();
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { emailRedirectTo },
     });
     if (error) {
       throw new AppError(error.message, 400, "signup_failed");
+    }
+    // Supabase deliberately returns a fake "success" (no error) for an email
+    // that already belongs to a confirmed account, to prevent attackers from
+    // using signup to enumerate registered emails — the only client-visible
+    // difference is an empty identities array, instead of the populated one
+    // a genuinely new (or still-unconfirmed, legitimately retrying) signup
+    // gets. Confirmed empirically against this project before relying on it.
+    if (data.user && data.user.identities?.length === 0) {
+      throw new AppError(
+        "An account with this email already exists. Try signing in instead.",
+        400,
+        "account_exists"
+      );
     }
   },
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { LogoMark } from "@/components/LogoMark";
+import { AccountMenu } from "@/components/AccountMenu";
 import { DocPreviewCard } from "@/components/landing/DocPreviewCard";
 import { appSettingsService } from "@/server/services/app-settings.service";
 import { authService } from "@/server/services/auth.service";
@@ -54,16 +55,7 @@ export default async function Home() {
             </span>
           </div>
           {initials ? (
-            <form action={signOut}>
-              <button
-                type="submit"
-                title="Sign out"
-                aria-label="Sign out"
-                className="flex h-[34px] w-[34px] shrink-0 cursor-pointer items-center justify-center rounded-[9px] border border-white/[0.09] bg-white/[0.02] font-display text-[13px] font-semibold text-fg-label"
-              >
-                {initials}
-              </button>
-            </form>
+            <AccountMenu initials={initials} signOutAction={signOut} />
           ) : (
             <Link href="/login" className="text-[14.5px] font-[450] text-fg-tertiary">
               Sign in
