@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Placeholder values only — nothing here calls out to a real service. These
+# just need to be non-empty so lazily-read env vars (Stripe/OpenAI/Supabase
+# clients) don't throw "not set" during the build step. No real secrets are
+# used or required for CI.
+env:
+  NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: placeholder-publishable-key
+  DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+  OPENAI_API_KEY: sk-placeholder
+  STRIPE_SECRET_KEY: sk_test_placeholder
+  STRIPE_WEBHOOK_SECRET: whsec_placeholder
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
