@@ -9,9 +9,15 @@ export const nextPathSchema = z
       : "/dashboard"
   );
 
+// trim() must run BEFORE the email format check — validating the raw,
+// still-padded string first means whitespace from autofill/copy-paste
+// (which trim() would otherwise clean up) causes a valid email to be
+// rejected. Piping into the top-level z.email() (rather than the
+// deprecated chained .email() method) keeps that correct order.
 const emailSchema = z
-  .email({ message: "Enter a valid email address." })
-  .trim();
+  .string()
+  .trim()
+  .pipe(z.email({ message: "Enter a valid email address." }));
 
 export const signInSchema = z.object({
   email: emailSchema,
