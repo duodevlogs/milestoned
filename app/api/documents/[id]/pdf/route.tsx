@@ -12,9 +12,11 @@ import { userService } from "@/server/services/user.service";
 import { documentController } from "@/server/controllers/document.controller";
 import { DocumentPdf } from "@/lib/pdf/DocumentPdf";
 import { InvoicePdf } from "@/lib/pdf/InvoicePdf";
+import { ProposalPdf } from "@/lib/pdf/ProposalPdf";
 import { AppError, jsonError } from "@/server/errors";
 import type { GeneratedDocumentContent } from "@/lib/document-generation";
 import type { InvoiceContent } from "@/lib/invoice-generation";
+import type { ProposalContent } from "@/lib/proposal-generation";
 
 export async function GET(
   _request: Request,
@@ -36,6 +38,12 @@ export async function GET(
       document.docType === "invoice" ? (
         <InvoicePdf
           content={document.content as InvoiceContent}
+          businessName={profile?.businessName}
+          logoUrl={profile?.logoUrl}
+        />
+      ) : document.docType === "proposal" ? (
+        <ProposalPdf
+          content={document.content as ProposalContent}
           businessName={profile?.businessName}
           logoUrl={profile?.logoUrl}
         />
