@@ -5,6 +5,7 @@ import { documentService } from "@/server/services/document.service";
 import { appSettingsService } from "@/server/services/app-settings.service";
 import { InvoiceFlow } from "@/components/generate/invoice/InvoiceFlow";
 import { userService } from "@/server/services/user.service";
+import { getSuggestedTaxRate } from "@/lib/tax-rates";
 
 export default async function GenerateInvoicePage() {
   const user = await authService.getUser();
@@ -26,6 +27,7 @@ export default async function GenerateInvoicePage() {
       initialCredits={profile?.creditsRemaining ?? 0}
       clients={clients}
       linkableDocuments={linkableDocuments}
+      defaultTaxRatePct={getSuggestedTaxRate(profile?.country)}
     />
   );
 }

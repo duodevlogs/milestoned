@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useInvoiceFormStore } from "@/lib/stores/invoice-form.store";
 import { InvoiceStepIndicator } from "./InvoiceStepIndicator";
@@ -41,10 +41,13 @@ export function InvoiceFlow({
   initialCredits,
   clients,
   linkableDocuments,
+  defaultTaxRatePct,
 }: {
   initialCredits: number;
   clients: ClientWithDocumentCount[];
   linkableDocuments: LinkableDocumentSummary[];
+  /** Suggested from the business country in Account settings — applied once, only if the tax rate is still untouched. */
+  defaultTaxRatePct: number | null;
 }) {
   const {
     step,
@@ -84,6 +87,16 @@ export function InvoiceFlow({
   const [creditsRemaining, setCreditsRemaining] = useState(initialCredits);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Apply the country-suggested tax rate exactly once on mount, and only if
+  // the field is still at its untouched default — never overwrites a rate
+  // the consultant already set for this invoice.
+  useEffect(() => {
+    if (defaultTaxRatePct !== null && taxRatePct === "0") {
+      setField("taxRatePct", String(defaultTaxRatePct));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const requiredFieldsMissing =
     !clientName.trim() ||

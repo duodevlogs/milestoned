@@ -62,12 +62,14 @@ export async function updateBusinessDetails(formData: FormData) {
     const taxId = formData.get("taxId");
     const companyRegistration = formData.get("companyRegistration");
     const paymentInstructions = formData.get("paymentInstructions");
+    const country = formData.get("country");
 
     await userController.updateBusinessDetails(user.id, {
       businessAddress: typeof businessAddress === "string" ? businessAddress : undefined,
       taxId: typeof taxId === "string" ? taxId : undefined,
       companyRegistration: typeof companyRegistration === "string" ? companyRegistration : undefined,
       paymentInstructions: typeof paymentInstructions === "string" ? paymentInstructions : undefined,
+      country: typeof country === "string" ? country : undefined,
     });
   } catch (error) {
     destination = `/account?error=${encodeURIComponent(publicMessage(error))}`;

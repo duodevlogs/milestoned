@@ -27,6 +27,7 @@ export const userService = {
       taxId?: string;
       companyRegistration?: string;
       paymentInstructions?: string;
+      country?: string;
     }
   ): Promise<void> {
     await userRepository.updateBusinessDetails(userId, input);

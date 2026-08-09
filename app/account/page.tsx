@@ -6,6 +6,7 @@ import { billingService } from "@/server/services/billing.service";
 import { appSettingsService } from "@/server/services/app-settings.service";
 import { updateEmail, updatePassword, updateBranding, updateBusinessDetails } from "./actions";
 import { formatPackagePrice } from "@/lib/credit-packages";
+import { COUNTRIES } from "@/lib/tax-rates";
 
 export default async function AccountPage({
   searchParams,
@@ -169,6 +170,24 @@ export default async function AccountPage({
                 defaultValue={profile?.businessAddress ?? ""}
                 placeholder="e.g. 123 Market St, Bamberg, Germany"
               />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-[13px] font-medium text-fg-label">Country</span>
+              <select
+                className="ms-field cursor-pointer"
+                name="country"
+                defaultValue={profile?.country ?? ""}
+              >
+                <option value="">Not set</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1.5 block text-[12px] text-fg-muted">
+                Suggests a default VAT/tax rate when you start a new invoice — always editable per invoice.
+              </span>
             </label>
             <div className="grid grid-cols-2 gap-4">
               <label className="block">

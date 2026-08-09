@@ -37,4 +37,10 @@ describe("updateBusinessDetailsSchema", () => {
       updateBusinessDetailsSchema.parse({ paymentInstructions: "a".repeat(501) })
     ).toThrow();
   });
+
+  it("accepts a known country code or an empty string, and rejects anything else", () => {
+    expect(() => updateBusinessDetailsSchema.parse({ country: "DE" })).not.toThrow();
+    expect(() => updateBusinessDetailsSchema.parse({ country: "" })).not.toThrow();
+    expect(() => updateBusinessDetailsSchema.parse({ country: "XX" })).toThrow();
+  });
 });

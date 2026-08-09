@@ -47,6 +47,9 @@ export const users = pgTable("users", {
   taxId: text("tax_id"),
   companyRegistration: text("company_registration"),
   paymentInstructions: text("payment_instructions"),
+  // ISO 3166-1 alpha-2 code — suggests a default VAT/tax rate on new
+  // invoices (lib/tax-rates.ts), never printed on generated documents.
+  country: text("country"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

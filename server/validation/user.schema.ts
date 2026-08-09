@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { COUNTRY_CODES } from "@/lib/tax-rates";
 
 export const updateBrandingSchema = z.object({
   businessName: z.string().trim().max(80, "Keep it under 80 characters.").optional(),
@@ -14,6 +15,8 @@ export const updateBusinessDetailsSchema = z.object({
   taxId: z.string().trim().max(60, "Keep it under 60 characters.").optional(),
   companyRegistration: z.string().trim().max(60, "Keep it under 60 characters.").optional(),
   paymentInstructions: z.string().trim().max(500, "Keep it under 500 characters.").optional(),
+  // "" clears the selection — used to suggest a default VAT/tax rate on new invoices.
+  country: z.union([z.enum(COUNTRY_CODES), z.literal("")]).optional(),
 });
 
 export type UpdateBusinessDetailsInput = z.infer<typeof updateBusinessDetailsSchema>;

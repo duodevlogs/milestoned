@@ -65,6 +65,7 @@ export const userRepository = {
       taxId?: string;
       companyRegistration?: string;
       paymentInstructions?: string;
+      country?: string;
     }
   ): Promise<void> {
     const set: Partial<{
@@ -72,11 +73,13 @@ export const userRepository = {
       taxId: string;
       companyRegistration: string;
       paymentInstructions: string;
+      country: string;
     }> = {};
     if (input.businessAddress !== undefined) set.businessAddress = input.businessAddress;
     if (input.taxId !== undefined) set.taxId = input.taxId;
     if (input.companyRegistration !== undefined) set.companyRegistration = input.companyRegistration;
     if (input.paymentInstructions !== undefined) set.paymentInstructions = input.paymentInstructions;
+    if (input.country !== undefined) set.country = input.country;
     if (Object.keys(set).length === 0) return;
 
     const db = getDb();

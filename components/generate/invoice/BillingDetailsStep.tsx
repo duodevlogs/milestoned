@@ -96,6 +96,9 @@ export function BillingDetailsStep({
           </div>
         </label>
       </div>
+      <span className="-mt-3 text-[12px] text-fg-muted">
+        Defaults from your business country in Account settings — edit anytime.
+      </span>
       <label className="block">
         <span className="mb-2 block text-[13px] font-medium text-fg-label">
           PO number (optional)
