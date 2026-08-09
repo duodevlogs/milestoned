@@ -60,9 +60,6 @@ export function LineItemsStep({
       <div>
         <div className="mb-3 flex items-center justify-between">
           <span className="text-[13px] font-medium text-fg-label">Line items</span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-soft px-2.5 py-[3px] text-xs font-semibold text-gold">
-            0% interest, always
-          </span>
         </div>
 
         <div className="flex flex-col gap-[9px]">

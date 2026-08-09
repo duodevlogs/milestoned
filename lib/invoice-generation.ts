@@ -69,13 +69,9 @@ export function computeInvoiceTotals(
   return { subtotal, taxAmount, total: subtotal + taxAmount };
 }
 
-/**
- * Standard, non-optional on every invoice — reinforces the same 0%-interest
- * brand promise used on the Proposal/SOW, worded as a fee for lateness
- * rather than interest on the milestone plan itself.
- */
+/** Standard, non-optional on every invoice — scopes the late fee to genuinely overdue payments only. */
 export const INVOICE_LATE_FEE_NOTE =
-  "0% interest — always. This invoice carries no interest. A flat delay administration fee may apply only if payment is more than 30 days past due; the milestone plan itself remains interest-free regardless.";
+  "A flat delay administration fee may apply only if payment is more than 30 days past due. No fee applies to payments made on time.";
 
 const CURRENCY_SYMBOLS: Record<InvoiceCurrency, string> = {
   USD: "$",

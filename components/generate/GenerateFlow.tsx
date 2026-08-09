@@ -37,7 +37,7 @@ const STEP_META = [
   },
   {
     title: "Milestones & timeline",
-    hint: "Split the fee into interest-free milestones. They must add up to 100%.",
+    hint: "Split the fee into milestones. They must add up to 100%.",
   },
 ];
 

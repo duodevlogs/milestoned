@@ -24,7 +24,7 @@ const STEP_META = [
   },
   {
     title: "Line items & review",
-    hint: "What's being billed, and how it adds up. Interest-free, always.",
+    hint: "What's being billed, and how it adds up.",
   },
 ];
 

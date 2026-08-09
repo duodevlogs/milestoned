@@ -81,12 +81,11 @@ export default async function Home() {
             </h1>
 
             <p className="mb-[38px] max-w-[560px] text-[1.19rem] font-normal leading-[1.62] text-fg-secondary text-pretty">
-              Milestoned drafts the four documents every web project needs —{" "}
+              Milestoned drafts the four documents every client engagement needs —{" "}
               <span className="text-[#d5dce3]">
                 Scope of Work, Contract, Proposal, and Invoice
               </span>{" "}
-              — written for dev consultants, with milestone-based, interest-free
-              payment terms built into every one.
+              — with milestone-based payment terms built into every one.
             </p>
 
             <div className="flex flex-col items-start gap-[18px]">

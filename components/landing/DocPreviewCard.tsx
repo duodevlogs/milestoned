@@ -18,14 +18,6 @@ const TABS: { key: DocKey; label: string }[] = [
   { key: "invoice", label: "Invoice" },
 ];
 
-function InterestBadge() {
-  return (
-    <span className="inline-flex items-center gap-[5px] rounded-full bg-gold-soft px-[9px] py-[3px] text-[11px] font-semibold text-gold">
-      0% interest
-    </span>
-  );
-}
-
 function SkeletonLines({ widths }: { widths: string[] }) {
   return (
     <div className="mb-[22px] flex flex-col gap-[7px]">
@@ -81,7 +73,6 @@ function MilestoneSchedule() {
         <span className="text-[12.5px] font-semibold tracking-[0.005em] text-[#cfd6dd]">
           Payment schedule
         </span>
-        <InterestBadge />
       </div>
 
       <div className="relative">
@@ -151,7 +142,6 @@ function InvestmentSummary() {
         <span className="text-[12.5px] font-semibold tracking-[0.005em] text-[#cfd6dd]">
           Investment summary
         </span>
-        <InterestBadge />
       </div>
       <div className="flex items-baseline justify-between">
         <span className="text-[12.5px] text-fg-secondary">Total project investment</span>
@@ -167,7 +157,7 @@ function InvestmentSummary() {
         </div>
         <div className="flex items-center justify-between text-[12px]">
           <span className="text-fg-muted">Payment terms</span>
-          <span className="font-medium text-fg-label">Milestone-based, interest-free</span>
+          <span className="font-medium text-fg-label">Milestone-based</span>
         </div>
       </div>
     </div>
@@ -185,7 +175,6 @@ function InvoiceLedger() {
         <span className="text-[12.5px] font-semibold tracking-[0.005em] text-[#cfd6dd]">
           Charges
         </span>
-        <InterestBadge />
       </div>
       <div className="flex flex-col gap-3 border-b border-line-soft pb-3">
         {LINE_ITEMS.map((item) => (

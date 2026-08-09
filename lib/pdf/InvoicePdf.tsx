@@ -123,15 +123,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  interestBadge: {
-    fontSize: 8,
-    fontFamily: "Helvetica-Bold",
-    color: COLORS.badgeText,
-    backgroundColor: COLORS.badge,
-    borderRadius: 10,
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-  },
   table: {
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -315,7 +306,6 @@ export function InvoicePdf({
         <View style={styles.section} wrap={false}>
           <View style={styles.scheduleHeaderRow}>
             <Text style={styles.sectionTitle}>Charges</Text>
-            <Text style={styles.interestBadge}>0% interest</Text>
           </View>
           <View style={styles.table}>
             {content.lineItems.map((item, i) => (

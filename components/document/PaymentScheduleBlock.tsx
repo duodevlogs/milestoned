@@ -15,9 +15,6 @@ export function PaymentScheduleBlock({
         <div className="font-display text-xs font-semibold uppercase tracking-[0.04em] text-[#14151a]">
           {number} · Payment schedule
         </div>
-        <span className="rounded-full bg-paper-badge px-2.5 py-[3px] text-[10.5px] font-semibold text-paper-badge-text">
-          0% interest
-        </span>
       </div>
       <div className="overflow-hidden rounded-[10px] border border-paper-border">
         {milestones.map((m, i) => (

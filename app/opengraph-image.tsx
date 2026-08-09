@@ -62,27 +62,10 @@ export default async function Image() {
             color: FG_SECONDARY,
             lineHeight: 1.5,
             maxWidth: 820,
-            marginBottom: 44,
           }}
         >
-          Scope of Work, Contract, Proposal, and Invoice — for dev consultants, with
-          milestone-based, interest-free payment terms built in.
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "10px 20px",
-            borderRadius: 999,
-            background: "rgba(212, 176, 106, 0.14)",
-            fontSize: 22,
-            fontWeight: 600,
-            color: GOLD,
-          }}
-        >
-          0% interest, always
+          Scope of Work, Contract, Proposal, and Invoice — for anyone who delivers client
+          work, with milestone-based payments built in.
         </div>
       </div>
     ),

@@ -113,7 +113,7 @@ export const CLAUSE_FIELDS: ClauseFieldMeta[] = [
   {
     id: "latePayment",
     label: "Late payment fee",
-    description: "A fee applies only if a milestone payment becomes overdue — the milestone plan itself stays interest-free.",
+    description: "A fee applies only if a milestone payment becomes overdue, not to the milestone plan itself.",
     inputs: [
       { key: "latePaymentGraceDays", label: "Grace period", placeholder: "14", suffix: "days" },
       { key: "latePaymentFeePct", label: "Late fee", placeholder: "1.5", suffix: "% / month" },
@@ -159,7 +159,7 @@ function terminationBody(noticeDays: string): string {
 function latePaymentBody(graceDays: string, feePct: string): string {
   const grace = graceDays.trim() || "14";
   const fee = feePct.trim() || "1.5";
-  return `Milestone payments are due within ${grace} days of invoicing. Payments received after this period may incur a late fee of ${fee}% per month on the outstanding balance. This does not affect the interest-free structure of the milestone schedule itself — it applies only to payments that become overdue.`;
+  return `Milestone payments are due within ${grace} days of invoicing. Payments received after this period may incur a late fee of ${fee}% per month on the outstanding balance. This fee applies only to payments that become overdue, not to the milestone schedule itself.`;
 }
 
 function warrantyBody(): string {

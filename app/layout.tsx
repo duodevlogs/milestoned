@@ -15,9 +15,9 @@ const ibmPlexSans = IBM_Plex_Sans({
   variable: "--font-ibm-plex",
 });
 
-const TITLE = "Milestoned — client documents for dev consultants";
+const TITLE = "Milestoned — client documents for anyone who delivers work";
 const DESCRIPTION =
-  "Scope of Work, Contract, Proposal, and Invoice — drafted for web dev consultants, with milestone-based, interest-free payment terms built in.";
+  "Scope of Work, Contract, Proposal, and Invoice — drafted for freelancers, agencies, and creators, with milestone-based payment terms built in.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
