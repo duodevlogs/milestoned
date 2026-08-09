@@ -63,6 +63,24 @@ const proposalSectionsSchema = z.object({
 
 export type ProposalSections = z.infer<typeof proposalSectionsSchema>;
 
+const sowSectionsSchema = z.object({
+  purpose: z
+    .string()
+    .describe(
+      "One paragraph stating the purpose of this Scope of Work and tying it to the governing contract (or the agreement between the parties, if no contract number is given)."
+    ),
+  projectOverview: z
+    .string()
+    .describe("A paragraph explaining what's being built and why, for someone new to the project."),
+  scopeOfWork: z
+    .string()
+    .describe(
+      "A paragraph or two expanding the consultant's plain scope notes into formal, itemized, clause-ready language describing the work included."
+    ),
+});
+
+export type SowSections = z.infer<typeof sowSectionsSchema>;
+
 export const openaiService = {
   /**
    * Generates the two prose sections of a document (Parties & Purpose,
@@ -140,6 +158,50 @@ export const openaiService = {
         "You write the persuasive prose sections of a business proposal, one business pitching a client project to a prospective client, before any contract exists. Milestoned is only the software generating this document — never name it, never refer to it as the proposing party, and never write as if Milestoned is doing the work. The proposing party is given to you explicitly in the input as \"Proposing party\" — write in first person (\"we\") as that party, using only the name given. Voice: confident and warm, not legal or hype-y — this document's job is to win the engagement, not lock in terms. No exclamation points, no generic sales filler like \"unparalleled\" or \"game-changing.\" Turn the notes into a compelling narrative. Do not invent facts, credentials, deliverables, or figures beyond what is given to you.",
       input: promptLines.join("\n"),
       text: { format: zodTextFormat(proposalSectionsSchema, "proposal_sections") },
+    });
+
+    const parsed = response.output_parsed;
+    if (!parsed) {
+      throw new Error("The AI did not return parseable structured output.");
+    }
+    return parsed;
+  },
+
+  /**
+   * SOW gets its own prompt/schema too — it's the detailed, working
+   * document that governs the engagement once a proposal's been accepted,
+   * so the voice is formal and itemized (closer to Contract's), but it
+   * needs three sections instead of two and has to reference the governing
+   * contract by number when one is linked.
+   */
+  async generateSowSections(input: {
+    businessName: string | null;
+    clientName: string;
+    projectName: string;
+    linkedContractNumber: string | null;
+    overviewNotes: string;
+    scopeNotes: string;
+  }): Promise<SowSections> {
+    const consultingParty = input.businessName?.trim() || "the consultant";
+    const promptLines = [
+      `Consulting party (speaks in first person as "we"): ${consultingParty}`,
+      `Client: ${input.clientName}`,
+      `Project: ${input.projectName}`,
+      input.linkedContractNumber
+        ? `Governing contract number: ${input.linkedContractNumber}`
+        : "No governing contract number was provided — refer to it generically as \"the agreement between the parties.\"",
+      `${consultingParty}'s notes on what's being built and why: ${input.overviewNotes}`,
+      `${consultingParty}'s scope notes: ${input.scopeNotes}`,
+      "",
+      "Write the three sections described in the schema, in plain English, using only the facts given above.",
+    ];
+
+    const response = await getClient().responses.parse({
+      model: MODEL,
+      instructions:
+        "You write formal, clause-ready sections of a Scope of Work document — the detailed working document that governs a client engagement once a proposal has been accepted. Milestoned is only the software generating this document — never name it, never refer to it as a party to the agreement, and never write as if Milestoned is doing the work. The consulting party is given to you explicitly in the input as \"Consulting party\" — write in first person (\"we\") as that party, using only the name given. Voice: calm, direct, professional — no hype, no exclamation points, no filler. Turn the notes into formal but plain-English paragraphs. Do not invent deliverables, dates, or amounts beyond what is given to you.",
+      input: promptLines.join("\n"),
+      text: { format: zodTextFormat(sowSectionsSchema, "sow_sections") },
     });
 
     const parsed = response.output_parsed;

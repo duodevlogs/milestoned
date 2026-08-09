@@ -14,6 +14,13 @@ export interface LinkableDocumentSummary {
   milestones: { label: string; pct: number; amount: number }[];
 }
 
+export interface LinkableRefSummary {
+  id: string;
+  docType: Document["docType"];
+  docNumber: string | null;
+  projectName: string;
+}
+
 export const documentService = {
   async listForUser(userId: string): Promise<Document[]> {
     return documentRepository.listByUserId(userId);
@@ -38,6 +45,17 @@ export const documentService = {
         milestones: content.milestones ?? [],
       };
     });
+  },
+
+  /** Proposal/Contract documents the SOW flow can cross-reference in its header. */
+  async listLinkableForSOW(userId: string): Promise<LinkableRefSummary[]> {
+    const docs = await documentRepository.listByDocTypesForUser(userId, ["proposal", "contract"]);
+    return docs.map((doc) => ({
+      id: doc.id,
+      docType: doc.docType,
+      docNumber: doc.docNumber,
+      projectName: doc.projectName,
+    }));
   },
 
   async getForUser(userId: string, documentId: string): Promise<Document> {

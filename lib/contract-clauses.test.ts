@@ -23,11 +23,16 @@ describe("defaultClauseSelection", () => {
     expect(selection.governingLaw).toBe(true);
   });
 
-  it("only pre-checks revisions for a SOW", () => {
+  it("pre-checks the SOW-relevant subset, excluding liability/latePayment/governingLaw", () => {
     const selection = defaultClauseSelection("sow");
+    expect(selection.ip).toBe(true);
+    expect(selection.confidentiality).toBe(true);
+    expect(selection.warranty).toBe(true);
+    expect(selection.termination).toBe(true);
     expect(selection.revisions).toBe(true);
-    expect(selection.ip).toBe(false);
+    expect(selection.liability).toBe(false);
     expect(selection.latePayment).toBe(false);
+    expect(selection.governingLaw).toBe(false);
   });
 
   it("only pre-checks late payment for an invoice", () => {

@@ -66,7 +66,19 @@ export function defaultClauseSelection(docType: DocType): ClauseSelection {
     };
   }
   if (docType === "sow") {
-    return { ...base, revisions: true };
+    // Confidentiality/IP/warranty/termination/change-orders (revisions) all
+    // belong on a SOW per spec — governing law is deliberately excluded,
+    // since SOW has its own deterministic "governing terms" pointer back to
+    // the contract (see lib/sow-generation.ts's buildGoverningTermsNote)
+    // rather than restating a full jurisdiction clause.
+    return {
+      ...base,
+      ip: true,
+      confidentiality: true,
+      warranty: true,
+      termination: true,
+      revisions: true,
+    };
   }
   if (docType === "invoice") {
     return { ...base, latePayment: true };

@@ -225,15 +225,20 @@ export function GenerateFlow({
               <DocTypeStep
                 docType={docType}
                 onSelect={(dt) => {
-                  // Invoice and Proposal each have their own dedicated flow
-                  // (separate content shape from this contract-shaped
+                  // Invoice, Proposal, and SOW each have their own dedicated
+                  // flow (separate content shape from this contract-shaped
                   // wizard) — divert immediately rather than continuing here.
+                  // Contract is the only type still built on this flow.
                   if (dt === "invoice") {
                     router.push("/generate/invoice");
                     return;
                   }
                   if (dt === "proposal") {
                     router.push("/generate/proposal");
+                    return;
+                  }
+                  if (dt === "sow") {
+                    router.push("/generate/sow");
                     return;
                   }
                   setDocType(dt);
