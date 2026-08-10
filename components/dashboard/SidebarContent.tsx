@@ -10,6 +10,19 @@ function DocumentsIcon() {
   );
 }
 
+function ProjectsIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-fg-muted">
+      <path
+        d="M2.5 4.5a1 1 0 0 1 1-1h3l1.2 1.5h5.3a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-9.5a1 1 0 0 1-1-1z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function TemplatesIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-fg-muted">
@@ -82,6 +95,14 @@ export function SidebarContent({
         >
           <DocumentsIcon />
           Documents
+        </Link>
+        <Link
+          href="/projects"
+          onClick={onNavigate}
+          className="flex items-center gap-[11px] rounded-lg px-2.5 py-[9px] text-sm font-[450] text-fg-secondary transition-colors hover:bg-white/[0.03] hover:text-fg-bright"
+        >
+          <ProjectsIcon />
+          Projects
         </Link>
         <Link
           href="/templates"

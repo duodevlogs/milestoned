@@ -73,6 +73,33 @@ export const clients = pgTable(
   (t) => [index("clients_user_id_idx").on(t.userId)]
 );
 
+/**
+ * Groups one client engagement's Proposal, Contract, SOW, and Invoices
+ * together — sits between Client (a contact, spanning every engagement over
+ * time) and Document (one generated file). Auto-created/matched at
+ * generation time by (userId, clientName, name) — see
+ * project.service.ts's findOrCreateForDocument — never surfaced as a
+ * separate creation step in any wizard.
+ */
+export const projects = pgTable(
+  "projects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    clientId: uuid("client_id").references(() => clients.id, {
+      onDelete: "set null",
+    }),
+    clientName: text("client_name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("projects_user_id_created_at_idx").on(t.userId, t.createdAt.desc())]
+);
+
 export const documents = pgTable(
   "documents",
   {
@@ -91,6 +118,12 @@ export const documents = pgTable(
       onDelete: "set null",
     }),
     projectName: text("project_name").notNull(),
+    // Nullable — documents generated before Projects existed are left
+    // ungrouped rather than retroactively backfilled, same convention as
+    // docNumber/relatedDocumentId in 0007.
+    projectId: uuid("project_id").references(() => projects.id, {
+      onDelete: "set null",
+    }),
     content: jsonb("content").notNull(),
     pdfUrl: text("pdf_url"),
     status: text("status", {
@@ -117,6 +150,7 @@ export const documents = pgTable(
   (t) => [
     index("documents_user_id_created_at_idx").on(t.userId, t.createdAt.desc()),
     index("documents_client_id_idx").on(t.clientId),
+    index("documents_project_id_idx").on(t.projectId),
   ]
 );
 
@@ -212,6 +246,7 @@ export type Document = typeof documents.$inferSelect;
 export type CreditPurchase = typeof creditPurchases.$inferSelect;
 export type AppSettings = typeof appSettings.$inferSelect;
 export type Client = typeof clients.$inferSelect;
+export type Project = typeof projects.$inferSelect;
 export type ClauseBundle = typeof clauseBundles.$inferSelect;
 export type Template = typeof templates.$inferSelect;
 export type DocumentSequence = typeof documentSequences.$inferSelect;

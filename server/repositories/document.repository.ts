@@ -37,6 +37,7 @@ export const documentRepository = {
     clientName: string;
     clientId?: string | null;
     projectName: string;
+    projectId?: string | null;
     content: unknown;
     docNumber?: string | null;
     relatedDocumentId?: string | null;
@@ -50,6 +51,7 @@ export const documentRepository = {
         clientName: input.clientName,
         clientId: input.clientId ?? null,
         projectName: input.projectName,
+        projectId: input.projectId ?? null,
         content: input.content,
         docNumber: input.docNumber ?? null,
         relatedDocumentId: input.relatedDocumentId ?? null,
@@ -65,6 +67,16 @@ export const documentRepository = {
       .select()
       .from(documents)
       .where(and(eq(documents.clientId, clientId), eq(documents.userId, userId)))
+      .orderBy(desc(documents.createdAt));
+  },
+
+  /** Scoped to (projectId, userId) — for the project detail page's document history. */
+  async listByProjectIdForUser(projectId: string, userId: string): Promise<Document[]> {
+    const db = getDb();
+    return db
+      .select()
+      .from(documents)
+      .where(and(eq(documents.projectId, projectId), eq(documents.userId, userId)))
       .orderBy(desc(documents.createdAt));
   },
 

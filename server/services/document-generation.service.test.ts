@@ -4,6 +4,7 @@ import { userRepository } from "@/server/repositories/user.repository";
 import { documentRepository } from "@/server/repositories/document.repository";
 import { openaiService } from "@/server/services/openai.service";
 import { clientService } from "@/server/services/client.service";
+import { projectService } from "@/server/services/project.service";
 import type { GenerateDocumentInput } from "@/server/validation/document-generation.schema";
 import type { Document } from "@/server/db/schema";
 
@@ -22,12 +23,16 @@ vi.mock("@/server/services/openai.service", () => ({
 vi.mock("@/server/services/client.service", () => ({
   clientService: { verifyOwnership: vi.fn() },
 }));
+vi.mock("@/server/services/project.service", () => ({
+  projectService: { findOrCreateForDocument: vi.fn() },
+}));
 
 const decrementCreditsIfAvailable = vi.mocked(userRepository.decrementCreditsIfAvailable);
 const refundCredit = vi.mocked(userRepository.refundCredit);
 const createDocument = vi.mocked(documentRepository.create);
 const generateDocumentSections = vi.mocked(openaiService.generateDocumentSections);
 const verifyOwnership = vi.mocked(clientService.verifyOwnership);
+const findOrCreateForDocument = vi.mocked(projectService.findOrCreateForDocument);
 
 const BLANK_CLAUSES = {
   ip: false,
@@ -68,6 +73,8 @@ describe("documentGenerationService.generate", () => {
     createDocument.mockReset();
     generateDocumentSections.mockReset();
     verifyOwnership.mockReset();
+    findOrCreateForDocument.mockReset();
+    findOrCreateForDocument.mockResolvedValue("project-1");
   });
 
   it("rejects a clientId that doesn't belong to the caller, before spending any credit", async () => {

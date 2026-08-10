@@ -4,6 +4,7 @@ import { userRepository } from "@/server/repositories/user.repository";
 import { documentRepository } from "@/server/repositories/document.repository";
 import { openaiService } from "@/server/services/openai.service";
 import { clientService } from "@/server/services/client.service";
+import { projectService } from "@/server/services/project.service";
 import { AppError } from "@/server/errors";
 import { DOC_TYPE_META } from "@/lib/document-display";
 import { computeMilestoneAmounts, type GeneratedDocumentContent } from "@/lib/document-generation";
@@ -78,12 +79,19 @@ export const documentGenerationService = {
 
     let document: Document;
     try {
+      const projectId = await projectService.findOrCreateForDocument(userId, {
+        clientId: input.clientId,
+        clientName: input.clientName,
+        name: input.projectName,
+      });
+
       document = await documentRepository.create({
         userId,
         docType: input.docType,
         clientName: input.clientName,
         clientId: input.clientId ?? null,
         projectName: input.projectName,
+        projectId,
         content,
       });
     } catch (error) {
