@@ -1,4 +1,5 @@
 import { inviteClient, revokeClient } from "@/app/projects/[id]/actions";
+import { CopyableInput } from "./CopyableInput";
 import type { PortalAccess } from "@/server/db/schema";
 
 export function ClientPortalSection({
@@ -25,13 +26,7 @@ export function ClientPortalSection({
 
       <label className="mb-5 block">
         <span className="mb-2 block text-[13px] font-medium text-fg-label">Portal link</span>
-        <input
-          className="ms-field font-mono text-[12.5px]"
-          type="text"
-          readOnly
-          value={portalUrl}
-          onFocus={(e) => e.target.select()}
-        />
+        <CopyableInput value={portalUrl} />
       </label>
 
       <form action={inviteClient} className="mb-5 flex flex-wrap items-end gap-3">
