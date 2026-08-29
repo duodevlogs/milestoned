@@ -26,6 +26,18 @@ export const projectRepository = {
   },
 
   /**
+   * Deliberately unscoped by userId — used only by the Client Portal's own
+   * read path, where authorization comes from a verified OTP session +
+   * active portalAccess row, not from a Milestoned user session at all.
+   * Never call this from anywhere in the authenticated provider-side app.
+   */
+  async getById(id: string): Promise<Project | null> {
+    const db = getDb();
+    const rows = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
+    return rows[0] ?? null;
+  },
+
+  /**
    * Matches an existing project for this exact (clientName, name) pair —
    * the grouping heuristic used by findOrCreateForDocument. clientName
    * rather than clientId, since clientId is optional on both projects and

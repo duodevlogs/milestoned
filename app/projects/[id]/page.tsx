@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/server/services/auth.service";
 import { projectController } from "@/server/controllers/project.controller";
+import { portalManagementController } from "@/server/controllers/portal-management.controller";
 import { appSettingsService } from "@/server/services/app-settings.service";
-import { DocumentRow } from "@/components/dashboard/DocumentRow";
+import { ProjectDocumentRow } from "@/components/projects/ProjectDocumentRow";
+import { ClientPortalSection } from "@/components/projects/ClientPortalSection";
 import { DOC_TYPE_META } from "@/lib/document-display";
 
 // Proposal → Contract → SOW → Invoice — the natural order an engagement
@@ -34,6 +36,10 @@ export default async function ProjectDetailPage({
   const sortedDocuments = [...documents].sort(
     (a, b) => DOC_TYPE_ORDER[a.docType] - DOC_TYPE_ORDER[b.docType]
   );
+
+  const invitedClients = await portalManagementController.listInvitedClients(user.id, id);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const portalUrl = `${siteUrl}/portal/${id}`;
 
   return (
     <div className="min-h-screen bg-navy text-fg">
@@ -81,6 +87,8 @@ export default async function ProjectDetailPage({
           </div>
         </div>
 
+        <ClientPortalSection projectId={id} portalUrl={portalUrl} invited={invitedClients} />
+
         <div className="mb-3.5 flex items-center justify-between">
           <span className="font-display text-[15px] font-semibold text-fg">Documents</span>
           <span className="text-[13px] text-fg-muted">{sortedDocuments.length} total</span>
@@ -92,7 +100,9 @@ export default async function ProjectDetailPage({
               No documents in this project yet.
             </div>
           ) : (
-            sortedDocuments.map((doc) => <DocumentRow key={doc.id} doc={doc} />)
+            sortedDocuments.map((doc) => (
+              <ProjectDocumentRow key={doc.id} doc={doc} projectId={id} />
+            ))
           )}
         </div>
       </main>

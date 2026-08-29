@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import {
   documents,
@@ -111,6 +111,49 @@ export const documentRepository = {
       .set({ status })
       .where(and(eq(documents.id, id), eq(documents.userId, userId)))
       .returning();
+    return rows[0] ?? null;
+  },
+
+  /**
+   * Scoped to (id, userId) — same ownership rule as updateStatus. Toggles
+   * Client Portal visibility for one document; null unshares it. Separate
+   * from `status` entirely — a document can be "signed" and still unshared.
+   */
+  async setSharedAt(id: string, userId: string, sharedAt: Date | null): Promise<Document | null> {
+    const db = getDb();
+    const rows = await db
+      .update(documents)
+      .set({ sharedAt })
+      .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+      .returning();
+    return rows[0] ?? null;
+  },
+
+  /**
+   * Scoped to (projectId) only, deliberately no userId — this serves the
+   * Client Portal, a different trust boundary entirely (an OTP-verified
+   * client session, not a Milestoned user session). Only ever returns
+   * documents with sharedAt set; an unshared document must never leak here.
+   */
+  async listSharedByProjectId(projectId: string): Promise<Document[]> {
+    const db = getDb();
+    return db
+      .select()
+      .from(documents)
+      .where(and(eq(documents.projectId, projectId), isNotNull(documents.sharedAt)))
+      .orderBy(desc(documents.createdAt));
+  },
+
+  /** Same portal trust boundary as listSharedByProjectId — scoped to (id, projectId), shared only. */
+  async getSharedByIdAndProjectId(id: string, projectId: string): Promise<Document | null> {
+    const db = getDb();
+    const rows = await db
+      .select()
+      .from(documents)
+      .where(
+        and(eq(documents.id, id), eq(documents.projectId, projectId), isNotNull(documents.sharedAt))
+      )
+      .limit(1);
     return rows[0] ?? null;
   },
 };

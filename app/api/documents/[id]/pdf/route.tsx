@@ -6,19 +6,11 @@
  * stays unused) since generation is fast and this keeps the PDF always in
  * sync with the document's current content and status.
  */
-import { renderToBuffer } from "@react-pdf/renderer";
 import { authService } from "@/server/services/auth.service";
 import { userService } from "@/server/services/user.service";
 import { documentController } from "@/server/controllers/document.controller";
-import { DocumentPdf } from "@/lib/pdf/DocumentPdf";
-import { InvoicePdf } from "@/lib/pdf/InvoicePdf";
-import { ProposalPdf } from "@/lib/pdf/ProposalPdf";
-import { SowPdf } from "@/lib/pdf/SowPdf";
+import { renderDocumentPdf, safePdfFilename } from "@/lib/pdf/renderDocumentPdf";
 import { AppError, jsonError } from "@/server/errors";
-import type { GeneratedDocumentContent } from "@/lib/document-generation";
-import type { InvoiceContent } from "@/lib/invoice-generation";
-import type { ProposalContent } from "@/lib/proposal-generation";
-import type { SowContent } from "@/lib/sow-generation";
 
 export async function GET(
   _request: Request,
@@ -36,41 +28,12 @@ export async function GET(
       userService.getProfile(user.id),
     ]);
 
-    const buffer = await renderToBuffer(
-      document.docType === "invoice" ? (
-        <InvoicePdf
-          content={document.content as InvoiceContent}
-          businessName={profile?.businessName}
-          logoUrl={profile?.logoUrl}
-        />
-      ) : document.docType === "proposal" ? (
-        <ProposalPdf
-          content={document.content as ProposalContent}
-          businessName={profile?.businessName}
-          logoUrl={profile?.logoUrl}
-        />
-      ) : document.docType === "sow" ? (
-        <SowPdf
-          content={document.content as SowContent}
-          businessName={profile?.businessName}
-          logoUrl={profile?.logoUrl}
-        />
-      ) : (
-        <DocumentPdf
-          content={document.content as GeneratedDocumentContent}
-          generatedAt={document.createdAt.toISOString()}
-          businessName={profile?.businessName}
-          logoUrl={profile?.logoUrl}
-        />
-      )
-    );
-
-    const safeName = document.projectName.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "") || "document";
+    const buffer = await renderDocumentPdf(document, profile);
 
     return new Response(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${safeName}.pdf"`,
+        "Content-Disposition": `attachment; filename="${safePdfFilename(document.projectName)}.pdf"`,
       },
     });
   } catch (error) {

@@ -12,6 +12,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  unique,
   uuid,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
@@ -100,6 +101,58 @@ export const projects = pgTable(
   (t) => [index("projects_user_id_created_at_idx").on(t.userId, t.createdAt.desc())]
 );
 
+/**
+ * Allowlist of (project, email) pairs the provider has invited into the
+ * Client Portal. No secret token lives here — the portal URL is just the
+ * project's UUID (not guessable), and the real access gate is proving
+ * control of `email` via a one-time code (see portalOtpCodes below).
+ */
+export const portalAccess = pgTable(
+  "portal_access",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    invitedAt: timestamp("invited_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    // Set by the provider to instantly cut off this client's access —
+    // checked on every portal request, not just at OTP verification time.
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("portal_access_project_id_idx").on(t.projectId),
+    unique("portal_access_project_id_email_key").on(t.projectId, t.email),
+  ]
+);
+
+/**
+ * Short-lived one-time codes, never stored in plaintext (codeHash only).
+ * Single-use (consumedAt) with a capped guess count (attempts) — both
+ * enforced in portal-otp.service.ts, not by the schema itself.
+ */
+export const portalOtpCodes = pgTable(
+  "portal_otp_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    attempts: integer("attempts").notNull().default(0),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("portal_otp_codes_project_id_email_idx").on(t.projectId, t.email)]
+);
+
 export const documents = pgTable(
   "documents",
   {
@@ -143,6 +196,10 @@ export const documents = pgTable(
       (): AnyPgColumn => documents.id,
       { onDelete: "set null" }
     ),
+    // Null = draft, never visible in the Client Portal. Set the moment the
+    // provider explicitly shares this specific document — separate from
+    // `status`, since a document can be "signed" and still not yet shared.
+    sharedAt: timestamp("shared_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -247,6 +304,8 @@ export type CreditPurchase = typeof creditPurchases.$inferSelect;
 export type AppSettings = typeof appSettings.$inferSelect;
 export type Client = typeof clients.$inferSelect;
 export type Project = typeof projects.$inferSelect;
+export type PortalAccess = typeof portalAccess.$inferSelect;
+export type PortalOtpCode = typeof portalOtpCodes.$inferSelect;
 export type ClauseBundle = typeof clauseBundles.$inferSelect;
 export type Template = typeof templates.$inferSelect;
 export type DocumentSequence = typeof documentSequences.$inferSelect;
