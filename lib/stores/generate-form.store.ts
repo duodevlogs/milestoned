@@ -61,6 +61,15 @@ interface GenerateFormState {
     deliverables: string;
     clauses: ClauseSelection;
   }) => void;
+  /** Hydrates client/project/budget/scope/milestones from an accepted Proposal — see lib/proposal-generation.ts's toContractDraft. */
+  applyFromProposal: (draft: {
+    clientName: string;
+    clientId: string | null;
+    projectName: string;
+    budget: number;
+    scope: string;
+    milestones: { label: string; pct: number }[];
+  }) => void;
   goToStep: (step: number) => void;
   next: () => void;
   back: () => void;
@@ -103,6 +112,18 @@ export const useGenerateFormStore = create<GenerateFormState>((set) => ({
   applyBundle: (clauses) => set({ clauses, generated: null }),
   applyTemplate: ({ docType, scope, deliverables, clauses }) =>
     set({ docType, scope, deliverables, clauses, generated: null }),
+  applyFromProposal: ({ clientName, clientId, projectName, budget, scope, milestones }) =>
+    set({
+      docType: "contract",
+      clientName,
+      clientId,
+      projectName,
+      budget: String(budget),
+      scope,
+      milestones: milestones.length > 0 ? milestones : DEFAULT_MILESTONES,
+      clauses: defaultClauseSelection("contract"),
+      generated: null,
+    }),
   setMilestoneLabel: (index, value) =>
     set((s) => ({
       milestones: s.milestones.map((m, i) => (i === index ? { ...m, label: value } : m)),

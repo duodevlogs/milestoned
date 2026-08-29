@@ -2,14 +2,16 @@
 
 import { useTransition } from "react";
 import { updateDocumentStatus } from "@/app/dashboard/actions";
-import { ALL_DOCUMENT_STATUSES, DOC_STATUS_META } from "@/lib/document-display";
-import type { DocumentStatus } from "@/server/db/schema";
+import { ALL_DOCUMENT_STATUSES, DOC_STATUS_META, getStatusLabel } from "@/lib/document-display";
+import type { Document, DocumentStatus } from "@/server/db/schema";
 
 export function StatusSelect({
   documentId,
+  docType,
   status,
 }: {
   documentId: string;
+  docType: Document["docType"];
   status: DocumentStatus;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -35,7 +37,7 @@ export function StatusSelect({
     >
       {ALL_DOCUMENT_STATUSES.map((s) => (
         <option key={s} value={s} className="bg-panel text-fg">
-          {DOC_STATUS_META[s].label}
+          {getStatusLabel(docType, s)}
         </option>
       ))}
     </select>

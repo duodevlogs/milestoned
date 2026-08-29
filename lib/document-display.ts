@@ -72,6 +72,17 @@ export const DOC_STATUS_META: Record<
 
 export const ALL_DOCUMENT_STATUSES: DocumentStatus[] = ["draft", "sent", "signed", "paid"];
 
+/**
+ * The status vocabulary is shared/generic across all four doc types (no
+ * schema change needed for a Proposal's "accepted" concept) — a Proposal
+ * marked "signed" IS accepted, just relabeled here for display so it reads
+ * naturally and signals that drafting a Contract/SOW from it is available.
+ */
+export function getStatusLabel(docType: Document["docType"], status: DocumentStatus): string {
+  if (docType === "proposal" && status === "signed") return "Accepted";
+  return DOC_STATUS_META[status].label;
+}
+
 export function formatDocDate(date: Date): string {
   return date.toLocaleDateString("en-US", {
     month: "short",

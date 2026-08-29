@@ -13,6 +13,7 @@ import { MilestonesStep } from "./steps/MilestonesStep";
 import { LivePreview } from "./LivePreview";
 import type { GeneratedDocumentContent } from "@/lib/document-generation";
 import type { ClauseSelection } from "@/lib/contract-clauses";
+import type { ContractDraftFromProposal } from "@/lib/proposal-generation";
 import type { ClauseBundle, Template } from "@/server/db/schema";
 import type { ClientWithDocumentCount } from "@/server/services/client.service";
 
@@ -55,6 +56,7 @@ export function GenerateFlow({
   clients,
   bundles,
   initialTemplate,
+  initialFromProposal,
   businessName,
   logoUrl,
 }: {
@@ -62,6 +64,7 @@ export function GenerateFlow({
   clients: ClientWithDocumentCount[];
   bundles: ClauseBundle[];
   initialTemplate: Template | null;
+  initialFromProposal: ContractDraftFromProposal | null;
   businessName?: string | null;
   logoUrl?: string | null;
 }) {
@@ -91,6 +94,7 @@ export function GenerateFlow({
     setClauseField,
     applyBundle,
     applyTemplate,
+    applyFromProposal,
     next,
     back,
     setGenerated,
@@ -112,6 +116,15 @@ export function GenerateFlow({
       deliverables: initialTemplate.deliverables,
       clauses: initialTemplate.clauseSelection as ClauseSelection,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Same one-time hydration, from an accepted Proposal instead of a saved
+  // template — opened as /generate?fromProposal=<documentId> via the
+  // "Draft Contract" action on a signed Proposal's detail page.
+  useEffect(() => {
+    if (!initialFromProposal) return;
+    applyFromProposal(initialFromProposal);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

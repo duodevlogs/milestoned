@@ -80,3 +80,67 @@ export function addDays(iso: string, days: number): string {
 export function computeAddOnsTotal(addOns: { amount: number }[]): number {
   return addOns.reduce((sum, a) => sum + a.amount, 0);
 }
+
+/**
+ * Pre-fill payloads for the "Draft Contract/SOW from this Proposal" action
+ * on an accepted (status "signed") proposal — see DocumentView.tsx and
+ * app/generate/page.tsx / app/generate/sow/page.tsx. clientId isn't part of
+ * ProposalContent (it lives on the documents row, not the JSONB content),
+ * so callers pass it in separately.
+ */
+export interface ContractDraftFromProposal {
+  clientName: string;
+  clientId: string | null;
+  projectName: string;
+  budget: number;
+  scope: string;
+  milestones: { label: string; pct: number }[];
+}
+
+export function toContractDraft(
+  content: ProposalContent,
+  clientId: string | null
+): ContractDraftFromProposal {
+  return {
+    clientName: content.clientName,
+    clientId,
+    projectName: content.projectName,
+    budget: content.budget,
+    scope: [content.scopeOverview, content.proposedApproach].filter((s) => s.trim()).join("\n\n"),
+    milestones: content.milestones.map((m) => ({ label: m.label, pct: m.pct })),
+  };
+}
+
+export interface SowDraftFromProposal {
+  clientName: string;
+  clientId: string | null;
+  clientCompany: string | null;
+  projectName: string;
+  relatedProposalId: string;
+  overviewNotes: string;
+  scopeNotes: string;
+  budget: number;
+  milestones: { label: string; pct: number }[];
+}
+
+export function toSowDraft(
+  content: ProposalContent,
+  clientId: string | null,
+  proposalDocumentId: string
+): SowDraftFromProposal {
+  return {
+    clientName: content.clientName,
+    clientId,
+    clientCompany: content.clientCompany,
+    projectName: content.projectName,
+    relatedProposalId: proposalDocumentId,
+    overviewNotes: [content.executiveSummary, content.understandingClientNeeds]
+      .filter((s) => s.trim())
+      .join("\n\n"),
+    scopeNotes: [content.scopeOverview, content.proposedApproach]
+      .filter((s) => s.trim())
+      .join("\n\n"),
+    budget: content.budget,
+    milestones: content.milestones.map((m) => ({ label: m.label, pct: m.pct })),
+  };
+}

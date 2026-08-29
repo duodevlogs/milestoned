@@ -56,7 +56,7 @@ export function DocumentRow({ doc }: { doc: Document }) {
         {formatDocDate(doc.createdAt)}
       </span>
       <span onClick={(e) => e.stopPropagation()}>
-        <StatusSelect documentId={doc.id} status={doc.status} />
+        <StatusSelect documentId={doc.id} docType={doc.docType} status={doc.status} />
       </span>
       <span className="flex items-center justify-end text-[#4d545d]">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">

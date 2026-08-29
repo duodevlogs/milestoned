@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSowFormStore } from "@/lib/stores/sow-form.store";
 import { SowStepIndicator } from "./SowStepIndicator";
@@ -10,6 +10,7 @@ import { DeliverablesStep } from "./DeliverablesStep";
 import { TimelineStep } from "./TimelineStep";
 import { TermsStep } from "./TermsStep";
 import type { SowContent } from "@/lib/sow-generation";
+import type { SowDraftFromProposal } from "@/lib/proposal-generation";
 import type { ClientWithDocumentCount } from "@/server/services/client.service";
 import type { LinkableRefSummary } from "@/server/services/document.service";
 
@@ -51,10 +52,12 @@ export function SowFlow({
   initialCredits,
   clients,
   linkableDocuments,
+  initialFromProposal,
 }: {
   initialCredits: number;
   clients: ClientWithDocumentCount[];
   linkableDocuments: LinkableRefSummary[];
+  initialFromProposal: SowDraftFromProposal | null;
 }) {
   const {
     step,
@@ -92,6 +95,7 @@ export function SowFlow({
     removeMilestone,
     toggleClause,
     setClauseField,
+    applyFromProposal,
     next,
     back,
     setGenerated,
@@ -100,6 +104,15 @@ export function SowFlow({
   const [creditsRemaining, setCreditsRemaining] = useState(initialCredits);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Hydrate from an accepted Proposal exactly once on mount — opened as
+  // /generate/sow?fromProposal=<documentId> via the "Draft SOW" action on a
+  // signed Proposal's detail page. Mirrors GenerateFlow's template hydration.
+  useEffect(() => {
+    if (!initialFromProposal) return;
+    applyFromProposal(initialFromProposal);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const totalPct = milestones.reduce((sum, m) => sum + (Number(m.pct) || 0), 0);
 

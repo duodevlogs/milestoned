@@ -79,6 +79,18 @@ interface SowFormState {
   removeMilestone: (index: number) => void;
   toggleClause: (id: keyof ClauseSelection) => void;
   setClauseField: (key: keyof ClauseSelection, value: string) => void;
+  /** Hydrates client/company/project/related-proposal/notes/budget/milestones from an accepted Proposal — see lib/proposal-generation.ts's toSowDraft. */
+  applyFromProposal: (draft: {
+    clientName: string;
+    clientId: string | null;
+    clientCompany: string | null;
+    projectName: string;
+    relatedProposalId: string;
+    overviewNotes: string;
+    scopeNotes: string;
+    budget: number;
+    milestones: { label: string; pct: number }[];
+  }) => void;
   goToStep: (step: number) => void;
   next: () => void;
   back: () => void;
@@ -166,6 +178,32 @@ export const useSowFormStore = create<SowFormState>((set) => ({
     set((s) => ({ clauses: { ...s.clauses, [id]: !s.clauses[id] }, generated: null })),
   setClauseField: (key, value) =>
     set((s) => ({ clauses: { ...s.clauses, [key]: value }, generated: null })),
+  applyFromProposal: ({
+    clientName,
+    clientId,
+    clientCompany,
+    projectName,
+    relatedProposalId,
+    overviewNotes,
+    scopeNotes,
+    budget,
+    milestones,
+  }) =>
+    set({
+      clientName,
+      clientId,
+      clientCompany: clientCompany ?? "",
+      projectName,
+      relatedProposalId,
+      overviewNotes,
+      scopeNotes,
+      budget: String(budget),
+      milestones:
+        milestones.length > 0
+          ? milestones.map((m) => ({ label: m.label, pct: m.pct, targetDate: "" }))
+          : DEFAULT_MILESTONES,
+      generated: null,
+    }),
   goToStep: (step) => set({ step: Math.max(0, Math.min(TOTAL_STEPS - 1, step)) }),
   next: () => set((s) => ({ step: Math.min(TOTAL_STEPS - 1, s.step + 1) })),
   back: () => set((s) => ({ step: Math.max(0, s.step - 1) })),

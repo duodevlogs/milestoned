@@ -28,6 +28,8 @@ export function DocumentView({
   // InvoiceContent alike), so this view stays doc-type-agnostic.
   content: { docType: DocType; projectName: string };
 }) {
+  const showAutoDraft = content.docType === "proposal" && status === "signed";
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-navy text-fg">
       <header className="flex flex-shrink-0 items-center justify-between gap-4 border-b border-line-faint px-8 py-4">
@@ -53,7 +55,7 @@ export function DocumentView({
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          <StatusSelect documentId={documentId} status={status} />
+          <StatusSelect documentId={documentId} docType={content.docType} status={status} />
           <SaveAsTemplateButton documentId={documentId} />
           <a
             href={`/api/documents/${documentId}/pdf`}
@@ -63,6 +65,28 @@ export function DocumentView({
           </a>
         </div>
       </header>
+
+      {showAutoDraft && (
+        <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3 border-b border-gold-border bg-gold-soft px-8 py-3.5">
+          <span className="text-[13.5px] text-fg-label">
+            Accepted — draft the next document from this proposal&apos;s client, scope, and budget.
+          </span>
+          <div className="flex items-center gap-2.5">
+            <Link
+              href={`/generate?fromProposal=${documentId}`}
+              className="inline-flex items-center gap-2 rounded-[9px] border border-line-strong bg-transparent px-3.5 py-2 text-[13px] font-medium text-fg-soft"
+            >
+              Draft Contract
+            </Link>
+            <Link
+              href={`/generate/sow?fromProposal=${documentId}`}
+              className="inline-flex items-center gap-2 rounded-[9px] border border-line-strong bg-transparent px-3.5 py-2 text-[13px] font-medium text-fg-soft"
+            >
+              Draft SOW
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-1 justify-center overflow-y-auto bg-well p-10">
         <div className="w-full max-w-[620px]">
