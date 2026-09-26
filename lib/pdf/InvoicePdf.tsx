@@ -285,6 +285,9 @@ export function InvoicePdf({
             {content.clientBillingAddress && (
               <Text style={styles.partyLine}>{content.clientBillingAddress}</Text>
             )}
+            {content.clientTaxId && (
+              <Text style={styles.partyLine}>Tax/VAT ID: {content.clientTaxId}</Text>
+            )}
           </View>
 
           <View style={styles.metaFactsBlock}>
@@ -296,6 +299,12 @@ export function InvoicePdf({
               <Text style={styles.metaFactLabel}>Invoice date</Text>
               <Text style={styles.metaFactValue}>{invoiceDateLabel ?? "—"}</Text>
             </View>
+            {content.serviceDate && (
+              <View style={styles.metaFactRow}>
+                <Text style={styles.metaFactLabel}>Service date</Text>
+                <Text style={styles.metaFactValue}>{content.serviceDate}</Text>
+              </View>
+            )}
             {dueDateLabel && (
               <View style={styles.metaFactRow}>
                 <Text style={styles.metaFactLabel}>Due date</Text>
@@ -348,6 +357,14 @@ export function InvoicePdf({
                 {formatInvoiceAmount(content.subtotal, content.currency)}
               </Text>
             </View>
+            {content.discountAmount ? (
+              <View style={styles.totalsRow}>
+                <Text style={styles.totalsLabel}>Discount</Text>
+                <Text style={styles.totalsValue}>
+                  -{formatInvoiceAmount(content.discountAmount, content.currency)}
+                </Text>
+              </View>
+            ) : null}
             {content.taxRatePct > 0 && (
               <View style={styles.totalsRow}>
                 <Text style={styles.totalsLabel}>Tax ({content.taxRatePct}%)</Text>
@@ -390,7 +407,12 @@ export function InvoicePdf({
           ) : (
             <Text style={styles.paymentLine}>Payment instructions to be provided separately.</Text>
           )}
-          <Text style={styles.lateFeeNote}>{INVOICE_LATE_FEE_NOTE}</Text>
+          {/* undefined = an invoice generated before this was optional, which always printed the standard line */}
+          {(content.lateFeeNote === undefined ? INVOICE_LATE_FEE_NOTE : content.lateFeeNote) && (
+            <Text style={styles.lateFeeNote}>
+              {content.lateFeeNote === undefined ? INVOICE_LATE_FEE_NOTE : content.lateFeeNote}
+            </Text>
+          )}
         </View>
 
         {content.thankYouNote && <Text style={styles.thankYou}>{content.thankYouNote}</Text>}

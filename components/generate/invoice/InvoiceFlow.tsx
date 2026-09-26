@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useInvoiceFormStore } from "@/lib/stores/invoice-form.store";
+import { useInvoiceFormStore, type OptionalKey } from "@/lib/stores/invoice-form.store";
 import { InvoiceStepIndicator } from "./InvoiceStepIndicator";
 import { ClientProjectStep } from "./ClientProjectStep";
 import { BillingDetailsStep } from "./BillingDetailsStep";
@@ -42,15 +42,12 @@ export function InvoiceFlow({
   clients,
   linkableDocuments,
   defaultTaxRatePct,
-  taxExempt,
 }: {
   initialCredits: number;
   clients: ClientWithDocumentCount[];
   linkableDocuments: LinkableDocumentSummary[];
-  /** Suggested from the business country in Account settings — applied once, only if the tax rate is still untouched. */
+  /** Suggested from the business country in Account settings — prefills the rate when "Add VAT / tax" is ticked. */
   defaultTaxRatePct: number | null;
-  /** Small-business-exempt account: tax is locked to 0% and an exemption note prints instead. */
-  taxExempt: boolean;
 }) {
   const {
     step,
@@ -66,6 +63,12 @@ export function InvoiceFlow({
     poNumber,
     currency,
     taxRatePct,
+    taxNote,
+    lateFeeNote,
+    serviceDate,
+    clientTaxId,
+    discountAmount,
+    enabled,
     lineItems,
     milestoneCurrent,
     milestoneTotal,
@@ -77,6 +80,7 @@ export function InvoiceFlow({
     selectClient,
     setField,
     setCurrency,
+    toggleOptional,
     selectRelatedDocument,
     addMilestoneAsLineItem,
     setLineItemDescription,
@@ -92,18 +96,17 @@ export function InvoiceFlow({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Apply the country-suggested tax rate exactly once on mount, and only if
-  // the field is still at its untouched default — never overwrites a rate
-  // the consultant already set for this invoice.
-  useEffect(() => {
-    if (taxExempt) {
-      // Overrides even a stale rate left in the store from an earlier invoice.
-      setField("taxRatePct", "0");
-    } else if (defaultTaxRatePct !== null && taxRatePct === "0") {
+  // Ticking "Add VAT / tax" starts from the country-suggested rate, unless a
+  // rate was already typed for this invoice.
+  function handleToggle(key: OptionalKey) {
+    if (key === "tax" && !enabled.tax && defaultTaxRatePct !== null && Number(taxRatePct) === 0) {
       setField("taxRatePct", String(defaultTaxRatePct));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    toggleOptional(key);
+  }
+
+  const effectiveTaxRatePct = enabled.tax ? Number(taxRatePct) || 0 : 0;
+  const effectiveDiscount = enabled.discount ? Number(discountAmount) || 0 : 0;
 
   const requiredFieldsMissing =
     !clientName.trim() ||
@@ -118,7 +121,7 @@ export function InvoiceFlow({
     setSubmitError(null);
     try {
       const milestoneProgress =
-        milestoneCurrent.trim() && milestoneTotal.trim()
+        enabled.milestoneProgress && milestoneCurrent.trim() && milestoneTotal.trim()
           ? { current: Number(milestoneCurrent), total: Number(milestoneTotal) }
           : undefined;
 
@@ -135,17 +138,22 @@ export function InvoiceFlow({
           invoiceDate,
           dueDate: dueDate || undefined,
           paymentTermsLabel,
-          poNumber: poNumber || undefined,
+          poNumber: (enabled.poNumber && poNumber) || undefined,
           currency,
-          taxRatePct: Number(taxRatePct) || 0,
+          taxRatePct: effectiveTaxRatePct,
+          discountAmount: effectiveDiscount,
+          taxExemptionNote: (enabled.taxNote && taxNote) || undefined,
+          lateFeeNote: (enabled.lateFee && lateFeeNote) || undefined,
+          serviceDate: (enabled.serviceDate && serviceDate) || undefined,
+          clientTaxId: (enabled.clientTaxId && clientTaxId) || undefined,
           lineItems: lineItems.map((item) => ({
             description: item.description,
             milestoneLabel: item.milestoneLabel || undefined,
             amount: Number(item.amount) || 0,
           })),
           milestoneProgress,
-          thankYouNote: thankYouNote || undefined,
-          additionalDetails: additionalDetails || undefined,
+          thankYouNote: (enabled.thankYou && thankYouNote) || undefined,
+          additionalDetails: (enabled.additionalDetails && additionalDetails) || undefined,
         }),
       });
       const json: GenerateApiSuccess & GenerateApiError = await res.json();
@@ -226,39 +234,42 @@ export function InvoiceFlow({
           )}
           {step === 1 && (
             <BillingDetailsStep
-              invoiceDate={invoiceDate}
-              dueDate={dueDate}
-              paymentTermsLabel={paymentTermsLabel}
-              poNumber={poNumber}
+              values={{
+                invoiceDate,
+                dueDate,
+                paymentTermsLabel,
+                poNumber,
+                taxRatePct,
+                taxNote,
+                lateFeeNote,
+                serviceDate,
+                clientTaxId,
+              }}
               currency={currency}
-              taxRatePct={taxRatePct}
-              taxLocked={taxExempt}
-              onInvoiceDate={(v) => setField("invoiceDate", v)}
-              onDueDate={(v) => setField("dueDate", v)}
-              onPaymentTermsLabel={(v) => setField("paymentTermsLabel", v)}
-              onPoNumber={(v) => setField("poNumber", v)}
+              enabled={enabled}
+              onField={setField}
               onCurrency={setCurrency}
-              onTaxRatePct={(v) => setField("taxRatePct", v)}
+              onToggle={handleToggle}
             />
           )}
           {step === 2 && (
             <LineItemsStep
               lineItems={lineItems}
               currency={currency}
-              taxRatePct={taxRatePct}
+              effectiveTaxRatePct={effectiveTaxRatePct}
+              effectiveDiscount={effectiveDiscount}
               milestoneCurrent={milestoneCurrent}
               milestoneTotal={milestoneTotal}
               thankYouNote={thankYouNote}
+              discountAmount={discountAmount}
               additionalDetails={additionalDetails}
-              taxExempt={taxExempt}
+              enabled={enabled}
               onDescription={setLineItemDescription}
               onAmount={setLineItemAmount}
               onAdd={addLineItem}
               onRemove={removeLineItem}
-              onMilestoneCurrent={(v) => setField("milestoneCurrent", v)}
-              onMilestoneTotal={(v) => setField("milestoneTotal", v)}
-              onThankYouNote={(v) => setField("thankYouNote", v)}
-              onAdditionalDetails={(v) => setField("additionalDetails", v)}
+              onField={setField}
+              onToggle={toggleOptional}
             />
           )}
 

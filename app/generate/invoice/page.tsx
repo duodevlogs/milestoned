@@ -28,7 +28,6 @@ export default async function GenerateInvoicePage() {
       clients={clients}
       linkableDocuments={linkableDocuments}
       defaultTaxRatePct={getSuggestedTaxRate(profile?.country)}
-      taxExempt={profile?.taxStatus === "exempt"}
     />
   );
 }

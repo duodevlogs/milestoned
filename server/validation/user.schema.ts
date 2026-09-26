@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { COUNTRY_CODES, TAX_STATUSES } from "@/lib/tax-rates";
+import { COUNTRY_CODES } from "@/lib/tax-rates";
 
 export const updateBrandingSchema = z.object({
   businessName: z.string().trim().max(80, "Keep it under 80 characters.").optional(),
@@ -17,9 +17,6 @@ export const updateBusinessDetailsSchema = z.object({
   paymentInstructions: z.string().trim().max(500, "Keep it under 500 characters.").optional(),
   // "" clears the selection — used to suggest a default VAT/tax rate on new invoices.
   country: z.union([z.enum(COUNTRY_CODES), z.literal("")]).optional(),
-  taxStatus: z.enum(TAX_STATUSES).optional(),
-  // Printed on invoices when taxStatus is "exempt"; blank falls back to the default wording.
-  taxExemptionNote: z.string().trim().max(400, "Keep it under 400 characters.").optional(),
 });
 
 export type UpdateBusinessDetailsInput = z.infer<typeof updateBusinessDetailsSchema>;

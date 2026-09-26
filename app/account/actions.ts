@@ -63,8 +63,6 @@ export async function updateBusinessDetails(formData: FormData) {
     const companyRegistration = formData.get("companyRegistration");
     const paymentInstructions = formData.get("paymentInstructions");
     const country = formData.get("country");
-    const taxStatus = formData.get("taxStatus");
-    const taxExemptionNote = formData.get("taxExemptionNote");
 
     await userController.updateBusinessDetails(user.id, {
       businessAddress: typeof businessAddress === "string" ? businessAddress : undefined,
@@ -72,8 +70,6 @@ export async function updateBusinessDetails(formData: FormData) {
       companyRegistration: typeof companyRegistration === "string" ? companyRegistration : undefined,
       paymentInstructions: typeof paymentInstructions === "string" ? paymentInstructions : undefined,
       country: typeof country === "string" ? country : undefined,
-      taxStatus: typeof taxStatus === "string" ? (taxStatus as "standard" | "exempt") : undefined,
-      taxExemptionNote: typeof taxExemptionNote === "string" ? taxExemptionNote : undefined,
     });
   } catch (error) {
     destination = `/account?error=${encodeURIComponent(publicMessage(error))}`;

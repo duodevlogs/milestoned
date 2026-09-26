@@ -12,6 +12,14 @@ describe("computeInvoiceTotals", () => {
     expect(result).toEqual({ subtotal: 1500, taxAmount: 0, total: 1500 });
   });
 
+  it("applies a discount before tax", () => {
+    expect(computeInvoiceTotals([{ amount: 1000 }], 19, 100)).toEqual({ subtotal: 1000, taxAmount: 171, total: 1071 });
+  });
+
+  it("never lets a discount push the total below zero", () => {
+    expect(computeInvoiceTotals([{ amount: 100 }], 19, 500)).toEqual({ subtotal: 100, taxAmount: 0, total: 0 });
+  });
+
   it("handles an empty line-item list", () => {
     expect(computeInvoiceTotals([], 19)).toEqual({ subtotal: 0, taxAmount: 0, total: 0 });
   });

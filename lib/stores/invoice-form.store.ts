@@ -1,5 +1,36 @@
 import { create } from "zustand";
-import type { InvoiceContent, InvoiceCurrency } from "@/lib/invoice-generation";
+import { INVOICE_LATE_FEE_NOTE, type InvoiceContent, type InvoiceCurrency } from "@/lib/invoice-generation";
+import { DEFAULT_TAX_EXEMPTION_NOTE } from "@/lib/tax-rates";
+
+/*
+ * Everything that isn't on every invoice is behind a checkbox, off by
+ * default — nothing uncommon appears on an invoice unless it's ticked.
+ * Unticked fields are simply not sent, whatever text they hold.
+ */
+export type OptionalKey =
+  | "tax"
+  | "taxNote"
+  | "lateFee"
+  | "serviceDate"
+  | "clientTaxId"
+  | "poNumber"
+  | "discount"
+  | "milestoneProgress"
+  | "thankYou"
+  | "additionalDetails";
+
+const NO_OPTIONALS: Record<OptionalKey, boolean> = {
+  tax: false,
+  taxNote: false,
+  lateFee: false,
+  serviceDate: false,
+  clientTaxId: false,
+  poNumber: false,
+  discount: false,
+  milestoneProgress: false,
+  thankYou: false,
+  additionalDetails: false,
+};
 
 export interface InvoiceLineItemInput {
   description: string;
@@ -27,6 +58,12 @@ interface InvoiceFormState {
   poNumber: string;
   currency: InvoiceCurrency;
   taxRatePct: string;
+  taxNote: string;
+  lateFeeNote: string;
+  serviceDate: string;
+  clientTaxId: string;
+  discountAmount: string;
+  enabled: Record<OptionalKey, boolean>;
 
   lineItems: InvoiceLineItemInput[];
   milestoneCurrent: string;
@@ -51,11 +88,17 @@ interface InvoiceFormState {
       | "taxRatePct"
       | "thankYouNote"
       | "additionalDetails"
+      | "taxNote"
+      | "lateFeeNote"
+      | "serviceDate"
+      | "clientTaxId"
+      | "discountAmount"
       | "milestoneCurrent"
       | "milestoneTotal",
     value: string
   ) => void;
   setCurrency: (currency: InvoiceCurrency) => void;
+  toggleOptional: (key: OptionalKey) => void;
   selectRelatedDocument: (documentId: string | null) => void;
   addMilestoneAsLineItem: (milestone: {
     label: string;
@@ -89,6 +132,12 @@ export const useInvoiceFormStore = create<InvoiceFormState>((set) => ({
   poNumber: "",
   currency: "USD",
   taxRatePct: "0",
+  taxNote: DEFAULT_TAX_EXEMPTION_NOTE,
+  lateFeeNote: INVOICE_LATE_FEE_NOTE,
+  serviceDate: "",
+  clientTaxId: "",
+  discountAmount: "",
+  enabled: { ...NO_OPTIONALS },
 
   lineItems: [{ ...DEFAULT_LINE_ITEM }],
   milestoneCurrent: "",
@@ -104,6 +153,8 @@ export const useInvoiceFormStore = create<InvoiceFormState>((set) => ({
     set({ clientId: client?.id ?? null, clientName: client?.name ?? "", generated: null }),
   setField: (field, value) => set({ [field]: value, generated: null }),
   setCurrency: (currency) => set({ currency, generated: null }),
+  toggleOptional: (key) =>
+    set((s) => ({ enabled: { ...s.enabled, [key]: !s.enabled[key] }, generated: null })),
   selectRelatedDocument: (documentId) => set({ relatedDocumentId: documentId, generated: null }),
   addMilestoneAsLineItem: ({ label, amount, index, total }) =>
     set((s) => {
@@ -120,6 +171,8 @@ export const useInvoiceFormStore = create<InvoiceFormState>((set) => ({
         lineItems: isBlankOnly ? [newItem] : [...s.lineItems, newItem],
         milestoneCurrent: String(index),
         milestoneTotal: String(total),
+        // Picking a milestone from a linked SOW/Contract is an explicit ask for the progress line.
+        enabled: { ...s.enabled, milestoneProgress: true },
         generated: null,
       };
     }),

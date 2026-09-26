@@ -38,6 +38,20 @@ describe("generateInvoiceSchema", () => {
     expect(() => generateInvoiceSchema.parse(validPayload())).not.toThrow();
   });
 
+  it("defaults the discount to 0 and rejects a negative one", () => {
+    expect(generateInvoiceSchema.parse(validPayload()).discountAmount).toBe(0);
+    expect(() => generateInvoiceSchema.parse(validPayload({ discountAmount: -5 }))).toThrow();
+  });
+
+  it("accepts the optional notes and caps their length", () => {
+    expect(() =>
+      generateInvoiceSchema.parse(
+        validPayload({ taxExemptionNote: "note", lateFeeNote: "note", serviceDate: "1-15 Sep 2026", clientTaxId: "HK123" })
+      )
+    ).not.toThrow();
+    expect(() => generateInvoiceSchema.parse(validPayload({ lateFeeNote: "a".repeat(401) }))).toThrow();
+  });
+
   it("accepts multi-line additional details and rejects an over-long block", () => {
     expect(() =>
       generateInvoiceSchema.parse(validPayload({ additionalDetails: "Bank: X\nSWIFT: Y\nTransfer fees: SHA" }))

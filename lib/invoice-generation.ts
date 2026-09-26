@@ -47,12 +47,20 @@ export interface InvoiceContent {
   /** "Milestone 2 of 4" progress against the whole engagement — null when this invoice isn't tied to a milestone plan. */
   milestoneProgress: { current: number; total: number } | null;
   subtotal: number;
+  /** Fixed amount taken off the subtotal before tax. Absent on invoices generated before this existed. */
+  discountAmount?: number;
   taxRatePct: number;
   taxAmount: number;
   total: number;
   currency: InvoiceCurrency;
-  /** Set instead of a VAT line when the account is small-business exempt. Absent on invoices generated before this existed. */
+  /** Optional tax / small-business line (e.g. §19 UStG), only when the user adds it. Absent on invoices generated before this existed. */
   taxExemptionNote?: string | null;
+  /** Optional late-fee wording. `undefined` = an invoice from before this was optional, which always printed INVOICE_LATE_FEE_NOTE; `null` = deliberately none. */
+  lateFeeNote?: string | null;
+  /** Optional date or period the service was delivered, free text (e.g. "1–15 Sep 2026"). */
+  serviceDate?: string | null;
+  /** Optional client VAT/tax ID, for B2B invoices that need it. */
+  clientTaxId?: string | null;
 
   // Payment terms.
   paymentInstructions: string | null;
@@ -66,14 +74,17 @@ export interface InvoiceContent {
 
 export function computeInvoiceTotals(
   lineItems: { amount: number }[],
-  taxRatePct: number
+  taxRatePct: number,
+  discountAmount = 0
 ): { subtotal: number; taxAmount: number; total: number } {
   const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
-  const taxAmount = Math.round((subtotal * taxRatePct) / 100);
-  return { subtotal, taxAmount, total: subtotal + taxAmount };
+  // Tax is charged on the discounted amount, never below zero.
+  const taxable = Math.max(subtotal - discountAmount, 0);
+  const taxAmount = Math.round((taxable * taxRatePct) / 100);
+  return { subtotal, taxAmount, total: taxable + taxAmount };
 }
 
-/** Standard, non-optional on every invoice — scopes the late fee to genuinely overdue payments only. */
+/** Default wording for the optional late-fee note, and what invoices generated before it became optional always printed. */
 export const INVOICE_LATE_FEE_NOTE =
   "A flat delay administration fee may apply only if payment is more than 30 days past due. No fee applies to payments made on time.";
 

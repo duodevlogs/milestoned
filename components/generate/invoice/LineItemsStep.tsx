@@ -1,5 +1,6 @@
 import { computeInvoiceTotals, formatInvoiceAmount, type InvoiceCurrency } from "@/lib/invoice-generation";
-import type { InvoiceLineItemInput } from "@/lib/stores/invoice-form.store";
+import type { InvoiceLineItemInput, OptionalKey } from "@/lib/stores/invoice-form.store";
+import { OptionalField } from "./OptionalField";
 
 function RemoveIcon() {
   return (
@@ -26,40 +27,49 @@ function PlusIcon() {
 export function LineItemsStep({
   lineItems,
   currency,
-  taxRatePct,
+  effectiveTaxRatePct,
+  effectiveDiscount,
   milestoneCurrent,
   milestoneTotal,
   thankYouNote,
+  discountAmount,
   additionalDetails,
-  taxExempt,
+  enabled,
   onDescription,
   onAmount,
   onAdd,
   onRemove,
-  onMilestoneCurrent,
-  onMilestoneTotal,
-  onThankYouNote,
-  onAdditionalDetails,
+  onField,
+  onToggle,
 }: {
   lineItems: InvoiceLineItemInput[];
   currency: InvoiceCurrency;
-  taxRatePct: string;
+  /** 0 unless "Add VAT / tax" is ticked. */
+  effectiveTaxRatePct: number;
+  /** 0 unless "Discount" is ticked. */
+  effectiveDiscount: number;
   milestoneCurrent: string;
   milestoneTotal: string;
   thankYouNote: string;
+  discountAmount: string;
   additionalDetails: string;
-  taxExempt: boolean;
+  enabled: Record<OptionalKey, boolean>;
   onDescription: (index: number, value: string) => void;
   onAmount: (index: number, value: string) => void;
   onAdd: () => void;
   onRemove: (index: number) => void;
-  onMilestoneCurrent: (value: string) => void;
-  onMilestoneTotal: (value: string) => void;
-  onThankYouNote: (value: string) => void;
-  onAdditionalDetails: (value: string) => void;
+  onField: (
+    field: "milestoneCurrent" | "milestoneTotal" | "thankYouNote" | "discountAmount" | "additionalDetails",
+    value: string
+  ) => void;
+  onToggle: (key: OptionalKey) => void;
 }) {
   const parsedItems = lineItems.map((item) => ({ amount: Number(item.amount) || 0 }));
-  const { subtotal, taxAmount, total } = computeInvoiceTotals(parsedItems, Number(taxRatePct) || 0);
+  const { subtotal, taxAmount, total } = computeInvoiceTotals(
+    parsedItems,
+    effectiveTaxRatePct,
+    effectiveDiscount
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -117,76 +127,100 @@ export function LineItemsStep({
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3.5 border-t border-line-faint pt-5">
-        <label className="block">
-          <span className="mb-2 block text-[13px] font-medium text-fg-label">
-            This milestone # (optional)
-          </span>
+
+      <div className="flex flex-col gap-2.5 border-t border-line-faint pt-5">
+        <div className="text-[13px] font-medium text-fg-label">Add only if you need it</div>
+
+        <OptionalField label="Discount" hint="A fixed amount taken off before any tax." checked={enabled.discount} onToggle={() => onToggle("discount")}>
+          <div className="relative w-[160px]">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-fg-tertiary">
+              {currency === "USD" ? "$" : currency === "EUR" ? "€" : "£"}
+            </span>
+            <input
+              className="ms-field ms-num pl-6"
+              type="number"
+              min="0"
+              value={discountAmount}
+              onChange={(e) => onField("discountAmount", e.target.value)}
+            />
+          </div>
+        </OptionalField>
+
+        <OptionalField
+          label="Milestone progress"
+          hint={"Shows \u201cMilestone X of Y\u201d so the client sees progress against the whole engagement."}
+          checked={enabled.milestoneProgress}
+          onToggle={() => onToggle("milestoneProgress")}
+        >
+          <div className="grid grid-cols-2 gap-3.5">
+            <label className="block">
+              <span className="mb-2 block text-[13px] font-medium text-fg-label">This milestone #</span>
+              <input
+                className="ms-field ms-num"
+                type="number"
+                min="1"
+                placeholder="e.g. 2"
+                value={milestoneCurrent}
+                onChange={(e) => onField("milestoneCurrent", e.target.value)}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-[13px] font-medium text-fg-label">Of total</span>
+              <input
+                className="ms-field ms-num"
+                type="number"
+                min="1"
+                placeholder="e.g. 4"
+                value={milestoneTotal}
+                onChange={(e) => onField("milestoneTotal", e.target.value)}
+              />
+            </label>
+          </div>
+        </OptionalField>
+
+        <OptionalField label="Thank-you note" checked={enabled.thankYou} onToggle={() => onToggle("thankYou")}>
           <input
-            className="ms-field ms-num"
-            type="number"
-            min="1"
-            placeholder="e.g. 2"
-            value={milestoneCurrent}
-            onChange={(e) => onMilestoneCurrent(e.target.value)}
+            className="ms-field"
+            type="text"
+            placeholder="e.g. Thanks for the continued work together."
+            value={thankYouNote}
+            onChange={(e) => onField("thankYouNote", e.target.value)}
           />
-        </label>
-        <label className="block">
-          <span className="mb-2 block text-[13px] font-medium text-fg-label">Of total</span>
-          <input
-            className="ms-field ms-num"
-            type="number"
-            min="1"
-            placeholder="e.g. 4"
-            value={milestoneTotal}
-            onChange={(e) => onMilestoneTotal(e.target.value)}
+        </OptionalField>
+
+        <OptionalField
+          label="Additional details"
+          hint="Its own section, printed as typed — e.g. the client's remittance/bank details or transfer-fee terms."
+          checked={enabled.additionalDetails}
+          onToggle={() => onToggle("additionalDetails")}
+        >
+          <textarea
+            className="ms-field"
+            rows={6}
+            maxLength={1500}
+            value={additionalDetails}
+            onChange={(e) => onField("additionalDetails", e.target.value)}
           />
-        </label>
+        </OptionalField>
       </div>
-      <span className="-mt-3 text-[12px] text-fg-muted">
-        Shown on the invoice as &ldquo;Milestone {milestoneCurrent || "X"} of{" "}
-        {milestoneTotal || "Y"}&rdquo; so the client sees progress against the whole engagement.
-      </span>
-
-      <label className="block border-t border-line-faint pt-5">
-        <span className="mb-2 block text-[13px] font-medium text-fg-label">
-          Thank-you note (optional)
-        </span>
-        <input
-          className="ms-field"
-          type="text"
-          placeholder="e.g. Thanks for the continued work together."
-          value={thankYouNote}
-          onChange={(e) => onThankYouNote(e.target.value)}
-        />
-      </label>
-
-      <label className="block">
-        <span className="mb-2 block text-[13px] font-medium text-fg-label">
-          Additional details (optional)
-        </span>
-        <textarea
-          className="ms-field"
-          rows={6}
-          maxLength={1500}
-          placeholder="Anything else to print on the invoice as its own section — e.g. the client's bank/remittance details, or transfer-fee terms (SHA)."
-          value={additionalDetails}
-          onChange={(e) => onAdditionalDetails(e.target.value)}
-        />
-        <span className="mt-1.5 block text-[12px] text-fg-muted">
-          Printed exactly as typed, line breaks included.
-        </span>
-      </label>
 
       <div className="rounded-[10px] border border-line-soft bg-white/[0.015] px-4 py-3.5">
         <div className="flex items-center justify-between text-[13px] text-fg-tertiary">
           <span>Subtotal</span>
           <span>{formatInvoiceAmount(subtotal, currency)}</span>
         </div>
-        <div className="mt-1.5 flex items-center justify-between text-[13px] text-fg-tertiary">
-          <span>{taxExempt ? "VAT (small-business exempt)" : `Tax (${taxRatePct || 0}%)`}</span>
-          <span>{taxExempt ? "not charged" : formatInvoiceAmount(taxAmount, currency)}</span>
-        </div>
+        {effectiveDiscount > 0 && (
+          <div className="mt-1.5 flex items-center justify-between text-[13px] text-fg-tertiary">
+            <span>Discount</span>
+            <span>−{formatInvoiceAmount(effectiveDiscount, currency)}</span>
+          </div>
+        )}
+        {effectiveTaxRatePct > 0 && (
+          <div className="mt-1.5 flex items-center justify-between text-[13px] text-fg-tertiary">
+            <span>Tax ({effectiveTaxRatePct}%)</span>
+            <span>{formatInvoiceAmount(taxAmount, currency)}</span>
+          </div>
+        )}
         <div className="mt-2 flex items-center justify-between border-t border-line-faint pt-2 text-sm font-semibold text-fg-bright">
           <span>Total due</span>
           <span>{formatInvoiceAmount(total, currency)}</span>

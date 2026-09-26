@@ -27,6 +27,11 @@ export const generateInvoiceSchema = z.object({
   currency: z.enum(["USD", "EUR", "GBP"]).default("USD"),
   poNumber: z.string().trim().optional(),
   thankYouNote: z.string().trim().optional(),
+  discountAmount: z.number().min(0).default(0),
+  taxExemptionNote: z.string().trim().max(400, "Keep the tax note under 400 characters.").optional(),
+  lateFeeNote: z.string().trim().max(400, "Keep the late-fee note under 400 characters.").optional(),
+  serviceDate: z.string().trim().max(100, "Keep the service date under 100 characters.").optional(),
+  clientTaxId: z.string().trim().max(60, "Keep the client tax ID under 60 characters.").optional(),
   additionalDetails: z.string().trim().max(1500, "Keep additional details under 1500 characters.").optional(),
 });
 

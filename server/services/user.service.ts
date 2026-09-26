@@ -28,8 +28,6 @@ export const userService = {
       companyRegistration?: string;
       paymentInstructions?: string;
       country?: string;
-      taxStatus?: "standard" | "exempt";
-      taxExemptionNote?: string;
     }
   ): Promise<void> {
     await userRepository.updateBusinessDetails(userId, input);

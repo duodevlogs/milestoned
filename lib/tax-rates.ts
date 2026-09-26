@@ -65,32 +65,12 @@ export function getSuggestedTaxRate(countryCode: string | null | undefined): num
   return country ? country.vatRatePct : null;
 }
 
-export type TaxStatus = "standard" | "exempt";
-
-export const TAX_STATUSES: [TaxStatus, ...TaxStatus[]] = ["standard", "exempt"];
-
 /**
- * Starting text only — the account owner (with their tax advisor) owns the
- * exact legal wording, so it's editable in Account settings. Germany's
- * small-business rule (Kleinunternehmerregelung, §19 UStG) is the case this
- * was written for; other countries have their own equivalents.
+ * Prefill for the optional tax/small-business note on an invoice — starting
+ * text only, always editable per invoice, and never added unless the user
+ * ticks the box. Germany's small-business rule (Kleinunternehmerregelung,
+ * §19 UStG) is the case this was written for; confirm the exact wording with
+ * a tax advisor.
  */
 export const DEFAULT_TAX_EXEMPTION_NOTE =
   "Kein Ausweis von Umsatzsteuer aufgrund der Kleinunternehmerregelung gemäß § 19 UStG. (No VAT charged: small business exemption under § 19 UStG.)";
-
-/**
- * The tax an invoice actually carries. An exempt account never shows VAT —
- * VAT printed on an invoice is generally owed even by an exempt business —
- * so the requested rate is ignored (not just defaulted) and the exemption
- * note is attached instead. Enforced server-side, not only in the wizard.
- */
-export function resolveInvoiceTax(
-  taxStatus: TaxStatus,
-  requestedRatePct: number,
-  exemptionNote: string | null | undefined
-): { taxRatePct: number; taxExemptionNote: string | null } {
-  if (taxStatus === "exempt") {
-    return { taxRatePct: 0, taxExemptionNote: exemptionNote?.trim() || DEFAULT_TAX_EXEMPTION_NOTE };
-  }
-  return { taxRatePct: requestedRatePct, taxExemptionNote: null };
-}
