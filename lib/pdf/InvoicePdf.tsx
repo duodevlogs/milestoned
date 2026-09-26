@@ -189,6 +189,24 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     color: COLORS.badgeText,
   },
+  exemptionNote: {
+    marginTop: 10,
+    fontSize: 9,
+    color: COLORS.muted,
+    textAlign: "right",
+  },
+  detailsBlock: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 14,
+    marginTop: 4,
+    marginBottom: 14,
+  },
+  detailsText: {
+    fontSize: 9.5,
+    color: COLORS.body,
+    lineHeight: 1.5,
+  },
   progressNote: {
     marginTop: 10,
     fontSize: 9,
@@ -346,6 +364,10 @@ export function InvoicePdf({
             </View>
           </View>
 
+          {content.taxExemptionNote && (
+            <Text style={styles.exemptionNote}>{content.taxExemptionNote}</Text>
+          )}
+
           {content.milestoneProgress && (
             <Text style={styles.progressNote}>
               Milestone {content.milestoneProgress.current} of {content.milestoneProgress.total}
@@ -353,6 +375,13 @@ export function InvoicePdf({
             </Text>
           )}
         </View>
+
+        {content.additionalDetails && (
+          <View style={styles.detailsBlock} wrap={false}>
+            <Text style={styles.sectionTitle}>Additional details</Text>
+            <Text style={styles.detailsText}>{content.additionalDetails}</Text>
+          </View>
+        )}
 
         <View style={styles.paymentBlock} wrap={false}>
           <Text style={styles.sectionTitle}>Payment</Text>

@@ -8,6 +8,7 @@ import { documentNumberService } from "@/server/services/document-number.service
 import { AppError } from "@/server/errors";
 import { DOC_TYPE_META } from "@/lib/document-display";
 import { computeInvoiceTotals, type InvoiceContent } from "@/lib/invoice-generation";
+import { resolveInvoiceTax } from "@/lib/tax-rates";
 import type { GenerateInvoiceInput } from "@/server/validation/invoice-generation.schema";
 import type { Document } from "@/server/db/schema";
 
@@ -55,10 +56,14 @@ export const invoiceGenerationService = {
         "invoice",
         profile?.businessName
       );
-      const { subtotal, taxAmount, total } = computeInvoiceTotals(
-        input.lineItems,
-        input.taxRatePct
+      // An exempt account's invoices never carry VAT, whatever the client
+      // sent — the wizard locks the field too, but this is the real guard.
+      const { taxRatePct, taxExemptionNote } = resolveInvoiceTax(
+        profile?.taxStatus ?? "standard",
+        input.taxRatePct,
+        profile?.taxExemptionNote
       );
+      const { subtotal, taxAmount, total } = computeInvoiceTotals(input.lineItems, taxRatePct);
 
       const content: InvoiceContent = {
         docType: "invoice",
@@ -83,13 +88,15 @@ export const invoiceGenerationService = {
         })),
         milestoneProgress: input.milestoneProgress ?? null,
         subtotal,
-        taxRatePct: input.taxRatePct,
+        taxRatePct,
+        taxExemptionNote,
         taxAmount,
         total,
         currency: input.currency,
         paymentInstructions: profile?.paymentInstructions ?? null,
         poNumber: input.poNumber || null,
         thankYouNote: input.thankYouNote || null,
+        additionalDetails: input.additionalDetails || null,
         generatedAt: new Date().toISOString(),
       };
 

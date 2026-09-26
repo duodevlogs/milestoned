@@ -51,11 +51,15 @@ export interface InvoiceContent {
   taxAmount: number;
   total: number;
   currency: InvoiceCurrency;
+  /** Set instead of a VAT line when the account is small-business exempt. Absent on invoices generated before this existed. */
+  taxExemptionNote?: string | null;
 
   // Payment terms.
   paymentInstructions: string | null;
   poNumber: string | null;
   thankYouNote: string | null;
+  /** Free multi-line block printed as its own section — e.g. the client's remittance/bank details or transfer-fee terms. */
+  additionalDetails?: string | null;
 
   generatedAt: string;
 }

@@ -51,6 +51,12 @@ export const users = pgTable("users", {
   // ISO 3166-1 alpha-2 code — suggests a default VAT/tax rate on new
   // invoices (lib/tax-rates.ts), never printed on generated documents.
   country: text("country"),
+  // "exempt" = small-business exemption: invoices are forced to 0% tax and
+  // print taxExemptionNote instead of any VAT line.
+  taxStatus: text("tax_status", { enum: ["standard", "exempt"] })
+    .notNull()
+    .default("standard"),
+  taxExemptionNote: text("tax_exemption_note"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -42,12 +42,15 @@ export function InvoiceFlow({
   clients,
   linkableDocuments,
   defaultTaxRatePct,
+  taxExempt,
 }: {
   initialCredits: number;
   clients: ClientWithDocumentCount[];
   linkableDocuments: LinkableDocumentSummary[];
   /** Suggested from the business country in Account settings — applied once, only if the tax rate is still untouched. */
   defaultTaxRatePct: number | null;
+  /** Small-business-exempt account: tax is locked to 0% and an exemption note prints instead. */
+  taxExempt: boolean;
 }) {
   const {
     step,
@@ -67,6 +70,7 @@ export function InvoiceFlow({
     milestoneCurrent,
     milestoneTotal,
     thankYouNote,
+    additionalDetails,
     generated,
     generatedDocumentId,
     setClientName,
@@ -92,7 +96,10 @@ export function InvoiceFlow({
   // the field is still at its untouched default — never overwrites a rate
   // the consultant already set for this invoice.
   useEffect(() => {
-    if (defaultTaxRatePct !== null && taxRatePct === "0") {
+    if (taxExempt) {
+      // Overrides even a stale rate left in the store from an earlier invoice.
+      setField("taxRatePct", "0");
+    } else if (defaultTaxRatePct !== null && taxRatePct === "0") {
       setField("taxRatePct", String(defaultTaxRatePct));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -138,6 +145,7 @@ export function InvoiceFlow({
           })),
           milestoneProgress,
           thankYouNote: thankYouNote || undefined,
+          additionalDetails: additionalDetails || undefined,
         }),
       });
       const json: GenerateApiSuccess & GenerateApiError = await res.json();
@@ -224,6 +232,7 @@ export function InvoiceFlow({
               poNumber={poNumber}
               currency={currency}
               taxRatePct={taxRatePct}
+              taxLocked={taxExempt}
               onInvoiceDate={(v) => setField("invoiceDate", v)}
               onDueDate={(v) => setField("dueDate", v)}
               onPaymentTermsLabel={(v) => setField("paymentTermsLabel", v)}
@@ -240,6 +249,8 @@ export function InvoiceFlow({
               milestoneCurrent={milestoneCurrent}
               milestoneTotal={milestoneTotal}
               thankYouNote={thankYouNote}
+              additionalDetails={additionalDetails}
+              taxExempt={taxExempt}
               onDescription={setLineItemDescription}
               onAmount={setLineItemAmount}
               onAdd={addLineItem}
@@ -247,6 +258,7 @@ export function InvoiceFlow({
               onMilestoneCurrent={(v) => setField("milestoneCurrent", v)}
               onMilestoneTotal={(v) => setField("milestoneTotal", v)}
               onThankYouNote={(v) => setField("thankYouNote", v)}
+              onAdditionalDetails={(v) => setField("additionalDetails", v)}
             />
           )}
 

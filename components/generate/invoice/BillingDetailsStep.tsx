@@ -9,6 +9,7 @@ export function BillingDetailsStep({
   poNumber,
   currency,
   taxRatePct,
+  taxLocked,
   onInvoiceDate,
   onDueDate,
   onPaymentTermsLabel,
@@ -22,6 +23,7 @@ export function BillingDetailsStep({
   poNumber: string;
   currency: InvoiceCurrency;
   taxRatePct: string;
+  taxLocked: boolean;
   onInvoiceDate: (value: string) => void;
   onDueDate: (value: string) => void;
   onPaymentTermsLabel: (value: string) => void;
@@ -87,7 +89,8 @@ export function BillingDetailsStep({
               min="0"
               max="100"
               step="0.1"
-              value={taxRatePct}
+              value={taxLocked ? "0" : taxRatePct}
+              disabled={taxLocked}
               onChange={(e) => onTaxRatePct(e.target.value)}
             />
             <span className="pointer-events-none absolute right-[13px] top-1/2 -translate-y-1/2 text-[13px] text-fg-tertiary">
@@ -97,7 +100,9 @@ export function BillingDetailsStep({
         </label>
       </div>
       <span className="-mt-3 text-[12px] text-fg-muted">
-        Defaults from your business country in Account settings — edit anytime.
+        {taxLocked
+          ? "Locked to 0% — your account is set to small-business exempt (Account settings). The exemption note prints on the invoice instead."
+          : "Defaults from your business country in Account settings — edit anytime."}
       </span>
       <label className="block">
         <span className="mb-2 block text-[13px] font-medium text-fg-label">

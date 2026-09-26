@@ -43,4 +43,14 @@ describe("updateBusinessDetailsSchema", () => {
     expect(() => updateBusinessDetailsSchema.parse({ country: "" })).not.toThrow();
     expect(() => updateBusinessDetailsSchema.parse({ country: "XX" })).toThrow();
   });
+
+  it("accepts a known tax status and rejects anything else", () => {
+    expect(() => updateBusinessDetailsSchema.parse({ taxStatus: "exempt" })).not.toThrow();
+    expect(() => updateBusinessDetailsSchema.parse({ taxStatus: "standard" })).not.toThrow();
+    expect(() => updateBusinessDetailsSchema.parse({ taxStatus: "whatever" })).toThrow();
+  });
+
+  it("caps the tax exemption note length", () => {
+    expect(() => updateBusinessDetailsSchema.parse({ taxExemptionNote: "a".repeat(401) })).toThrow();
+  });
 });

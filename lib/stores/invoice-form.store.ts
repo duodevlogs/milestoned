@@ -32,6 +32,7 @@ interface InvoiceFormState {
   milestoneCurrent: string;
   milestoneTotal: string;
   thankYouNote: string;
+  additionalDetails: string;
 
   generated: InvoiceContent | null;
   generatedDocumentId: string | null;
@@ -49,6 +50,7 @@ interface InvoiceFormState {
       | "poNumber"
       | "taxRatePct"
       | "thankYouNote"
+      | "additionalDetails"
       | "milestoneCurrent"
       | "milestoneTotal",
     value: string
@@ -92,6 +94,7 @@ export const useInvoiceFormStore = create<InvoiceFormState>((set) => ({
   milestoneCurrent: "",
   milestoneTotal: "",
   thankYouNote: "",
+  additionalDetails: "",
 
   generated: null,
   generatedDocumentId: null,

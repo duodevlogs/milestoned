@@ -38,6 +38,15 @@ describe("generateInvoiceSchema", () => {
     expect(() => generateInvoiceSchema.parse(validPayload())).not.toThrow();
   });
 
+  it("accepts multi-line additional details and rejects an over-long block", () => {
+    expect(() =>
+      generateInvoiceSchema.parse(validPayload({ additionalDetails: "Bank: X\nSWIFT: Y\nTransfer fees: SHA" }))
+    ).not.toThrow();
+    expect(() =>
+      generateInvoiceSchema.parse(validPayload({ additionalDetails: "a".repeat(1501) }))
+    ).toThrow();
+  });
+
   it("defaults tax rate to 0 and currency to USD when omitted", () => {
     const result = generateInvoiceSchema.parse(validPayload());
     expect(result.taxRatePct).toBe(0);

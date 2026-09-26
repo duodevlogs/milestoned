@@ -27,6 +27,7 @@ export const generateInvoiceSchema = z.object({
   currency: z.enum(["USD", "EUR", "GBP"]).default("USD"),
   poNumber: z.string().trim().optional(),
   thankYouNote: z.string().trim().optional(),
+  additionalDetails: z.string().trim().max(1500, "Keep additional details under 1500 characters.").optional(),
 });
 
 export type GenerateInvoiceInput = z.infer<typeof generateInvoiceSchema>;

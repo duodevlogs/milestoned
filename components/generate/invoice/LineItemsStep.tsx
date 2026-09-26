@@ -30,6 +30,8 @@ export function LineItemsStep({
   milestoneCurrent,
   milestoneTotal,
   thankYouNote,
+  additionalDetails,
+  taxExempt,
   onDescription,
   onAmount,
   onAdd,
@@ -37,6 +39,7 @@ export function LineItemsStep({
   onMilestoneCurrent,
   onMilestoneTotal,
   onThankYouNote,
+  onAdditionalDetails,
 }: {
   lineItems: InvoiceLineItemInput[];
   currency: InvoiceCurrency;
@@ -44,6 +47,8 @@ export function LineItemsStep({
   milestoneCurrent: string;
   milestoneTotal: string;
   thankYouNote: string;
+  additionalDetails: string;
+  taxExempt: boolean;
   onDescription: (index: number, value: string) => void;
   onAmount: (index: number, value: string) => void;
   onAdd: () => void;
@@ -51,6 +56,7 @@ export function LineItemsStep({
   onMilestoneCurrent: (value: string) => void;
   onMilestoneTotal: (value: string) => void;
   onThankYouNote: (value: string) => void;
+  onAdditionalDetails: (value: string) => void;
 }) {
   const parsedItems = lineItems.map((item) => ({ amount: Number(item.amount) || 0 }));
   const { subtotal, taxAmount, total } = computeInvoiceTotals(parsedItems, Number(taxRatePct) || 0);
@@ -155,14 +161,31 @@ export function LineItemsStep({
         />
       </label>
 
+      <label className="block">
+        <span className="mb-2 block text-[13px] font-medium text-fg-label">
+          Additional details (optional)
+        </span>
+        <textarea
+          className="ms-field"
+          rows={6}
+          maxLength={1500}
+          placeholder="Anything else to print on the invoice as its own section — e.g. the client's bank/remittance details, or transfer-fee terms (SHA)."
+          value={additionalDetails}
+          onChange={(e) => onAdditionalDetails(e.target.value)}
+        />
+        <span className="mt-1.5 block text-[12px] text-fg-muted">
+          Printed exactly as typed, line breaks included.
+        </span>
+      </label>
+
       <div className="rounded-[10px] border border-line-soft bg-white/[0.015] px-4 py-3.5">
         <div className="flex items-center justify-between text-[13px] text-fg-tertiary">
           <span>Subtotal</span>
           <span>{formatInvoiceAmount(subtotal, currency)}</span>
         </div>
         <div className="mt-1.5 flex items-center justify-between text-[13px] text-fg-tertiary">
-          <span>Tax ({taxRatePct || 0}%)</span>
-          <span>{formatInvoiceAmount(taxAmount, currency)}</span>
+          <span>{taxExempt ? "VAT (small-business exempt)" : `Tax (${taxRatePct || 0}%)`}</span>
+          <span>{taxExempt ? "not charged" : formatInvoiceAmount(taxAmount, currency)}</span>
         </div>
         <div className="mt-2 flex items-center justify-between border-t border-line-faint pt-2 text-sm font-semibold text-fg-bright">
           <span>Total due</span>

@@ -6,7 +6,7 @@ import { billingService } from "@/server/services/billing.service";
 import { appSettingsService } from "@/server/services/app-settings.service";
 import { updateEmail, updatePassword, updateBranding, updateBusinessDetails } from "./actions";
 import { formatPackagePrice } from "@/lib/credit-packages";
-import { COUNTRIES } from "@/lib/tax-rates";
+import { COUNTRIES, DEFAULT_TAX_EXEMPTION_NOTE } from "@/lib/tax-rates";
 
 export default async function AccountPage({
   searchParams,
@@ -187,6 +187,37 @@ export default async function AccountPage({
               </select>
               <span className="mt-1.5 block text-[12px] text-fg-muted">
                 Suggests a default VAT/tax rate when you start a new invoice — always editable per invoice.
+              </span>
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-[13px] font-medium text-fg-label">Tax status</span>
+              <select
+                className="ms-field cursor-pointer"
+                name="taxStatus"
+                defaultValue={profile?.taxStatus ?? "standard"}
+              >
+                <option value="standard">Charge VAT / tax (rate suggested from country)</option>
+                <option value="exempt">Small-business exempt — charge no VAT</option>
+              </select>
+              <span className="mt-1.5 block text-[12px] text-fg-muted">
+                If exempt, every invoice is locked to 0% and prints the note below instead. Switch
+                back once you pass your country&apos;s limit.
+              </span>
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-[13px] font-medium text-fg-label">
+                Exemption note (printed on invoices when exempt)
+              </span>
+              <textarea
+                className="ms-field"
+                name="taxExemptionNote"
+                rows={3}
+                maxLength={400}
+                defaultValue={profile?.taxExemptionNote ?? ""}
+                placeholder={DEFAULT_TAX_EXEMPTION_NOTE}
+              />
+              <span className="mt-1.5 block text-[12px] text-fg-muted">
+                Leave blank to use the wording shown. Confirm the exact text with your tax advisor.
               </span>
             </label>
             <div className="grid grid-cols-2 gap-4">
