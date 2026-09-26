@@ -56,6 +56,14 @@ export function DocumentView({
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <StatusSelect documentId={documentId} docType={content.docType} status={status} />
+          {content.docType === "invoice" && (
+            <Link
+              href={`/generate/invoice?edit=${documentId}`}
+              className="inline-flex items-center gap-2 rounded-[10px] border border-line-strong bg-transparent px-[16px] py-2.5 text-[13.5px] font-medium text-fg-soft"
+            >
+              Edit
+            </Link>
+          )}
           <SaveAsTemplateButton documentId={documentId} />
           <a
             href={`/api/documents/${documentId}/pdf`}

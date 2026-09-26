@@ -42,6 +42,61 @@ const DEFAULT_LINE_ITEM: InvoiceLineItemInput = { description: "", milestoneLabe
 
 const TOTAL_STEPS = 3; // Client & link, Billing & payment terms, Line items & review
 
+/** Every user-editable field of the wizard — what an existing invoice is loaded into when editing. */
+export interface InvoiceFormValues {
+  clientName: string;
+  clientId: string | null;
+  clientCompany: string;
+  clientBillingAddress: string;
+  projectName: string;
+  relatedDocumentId: string | null;
+  invoiceDate: string;
+  dueDate: string;
+  paymentTermsLabel: string;
+  poNumber: string;
+  currency: InvoiceCurrency;
+  taxRatePct: string;
+  taxNote: string;
+  lateFeeNote: string;
+  serviceDate: string;
+  clientTaxId: string;
+  discountAmount: string;
+  enabled: Record<OptionalKey, boolean>;
+  lineItems: InvoiceLineItemInput[];
+  milestoneCurrent: string;
+  milestoneTotal: string;
+  thankYouNote: string;
+  additionalDetails: string;
+}
+
+function freshInvoiceValues(): InvoiceFormValues {
+  return {
+    clientName: "",
+    clientId: null,
+    clientCompany: "",
+    clientBillingAddress: "",
+    projectName: "",
+    relatedDocumentId: null,
+    invoiceDate: new Date().toISOString().slice(0, 10),
+    dueDate: "",
+    paymentTermsLabel: "Net 14",
+    poNumber: "",
+    currency: "USD",
+    taxRatePct: "0",
+    taxNote: DEFAULT_TAX_EXEMPTION_NOTE,
+    lateFeeNote: INVOICE_LATE_FEE_NOTE,
+    serviceDate: "",
+    clientTaxId: "",
+    discountAmount: "",
+    enabled: { ...NO_OPTIONALS },
+    lineItems: [{ ...DEFAULT_LINE_ITEM }],
+    milestoneCurrent: "",
+    milestoneTotal: "",
+    thankYouNote: "",
+    additionalDetails: "",
+  };
+}
+
 interface InvoiceFormState {
   step: number;
 
@@ -73,7 +128,11 @@ interface InvoiceFormState {
 
   generated: InvoiceContent | null;
   generatedDocumentId: string | null;
+  /** Set while editing an already-generated invoice — saving updates that document instead of creating one. */
+  editingDocumentId: string | null;
 
+  hydrateForEdit: (values: InvoiceFormValues, documentId: string) => void;
+  resetForNew: () => void;
   setClientName: (value: string) => void;
   selectClient: (client: { id: string; name: string } | null) => void;
   setField: (
@@ -119,35 +178,16 @@ interface InvoiceFormState {
 export const useInvoiceFormStore = create<InvoiceFormState>((set) => ({
   step: 0,
 
-  clientName: "",
-  clientId: null,
-  clientCompany: "",
-  clientBillingAddress: "",
-  projectName: "",
-  relatedDocumentId: null,
-
-  invoiceDate: new Date().toISOString().slice(0, 10),
-  dueDate: "",
-  paymentTermsLabel: "Net 14",
-  poNumber: "",
-  currency: "USD",
-  taxRatePct: "0",
-  taxNote: DEFAULT_TAX_EXEMPTION_NOTE,
-  lateFeeNote: INVOICE_LATE_FEE_NOTE,
-  serviceDate: "",
-  clientTaxId: "",
-  discountAmount: "",
-  enabled: { ...NO_OPTIONALS },
-
-  lineItems: [{ ...DEFAULT_LINE_ITEM }],
-  milestoneCurrent: "",
-  milestoneTotal: "",
-  thankYouNote: "",
-  additionalDetails: "",
+  ...freshInvoiceValues(),
 
   generated: null,
   generatedDocumentId: null,
+  editingDocumentId: null,
 
+  hydrateForEdit: (values, documentId) =>
+    set({ ...values, editingDocumentId: documentId, step: 0, generated: null, generatedDocumentId: null }),
+  resetForNew: () =>
+    set({ ...freshInvoiceValues(), editingDocumentId: null, step: 0, generated: null, generatedDocumentId: null }),
   setClientName: (value) => set({ clientName: value, clientId: null, generated: null }),
   selectClient: (client) =>
     set({ clientId: client?.id ?? null, clientName: client?.name ?? "", generated: null }),

@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useInvoiceFormStore, type OptionalKey } from "@/lib/stores/invoice-form.store";
+import {
+  useInvoiceFormStore,
+  type InvoiceFormValues,
+  type OptionalKey,
+} from "@/lib/stores/invoice-form.store";
 import { InvoiceStepIndicator } from "./InvoiceStepIndicator";
 import { ClientProjectStep } from "./ClientProjectStep";
 import { BillingDetailsStep } from "./BillingDetailsStep";
@@ -34,7 +38,7 @@ interface GenerateApiError {
 
 interface GenerateApiSuccess {
   document: { id: string; content: InvoiceContent };
-  creditsRemaining: number;
+  creditsRemaining?: number;
 }
 
 export function InvoiceFlow({
@@ -42,12 +46,15 @@ export function InvoiceFlow({
   clients,
   linkableDocuments,
   defaultTaxRatePct,
+  initialEdit,
 }: {
   initialCredits: number;
   clients: ClientWithDocumentCount[];
   linkableDocuments: LinkableDocumentSummary[];
   /** Suggested from the business country in Account settings — prefills the rate when "Add VAT / tax" is ticked. */
   defaultTaxRatePct: number | null;
+  /** Set when opened as /generate/invoice?edit=<id> — the saved invoice to load into the wizard. */
+  initialEdit: { documentId: string; docNumber: string | null; values: InvoiceFormValues } | null;
 }) {
   const {
     step,
@@ -90,11 +97,28 @@ export function InvoiceFlow({
     next,
     back,
     setGenerated,
+    editingDocumentId,
+    hydrateForEdit,
+    resetForNew,
   } = useInvoiceFormStore();
 
   const [creditsRemaining, setCreditsRemaining] = useState(initialCredits);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Load the saved invoice exactly once on entry when editing. A fresh
+  // "new invoice" visit after an edit must not inherit the edited invoice's
+  // values (the store outlives navigation), so it resets first.
+  useEffect(() => {
+    if (initialEdit) {
+      hydrateForEdit(initialEdit.values, initialEdit.documentId);
+    } else if (editingDocumentId) {
+      resetForNew();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isEditing = Boolean(initialEdit);
 
   // Ticking "Add VAT / tax" starts from the country-suggested rate, unless a
   // rate was already typed for this invoice.
@@ -125,8 +149,8 @@ export function InvoiceFlow({
           ? { current: Number(milestoneCurrent), total: Number(milestoneTotal) }
           : undefined;
 
-      const res = await fetch("/api/generate-invoice", {
-        method: "POST",
+      const res = await fetch(isEditing ? `/api/invoices/${initialEdit!.documentId}` : "/api/generate-invoice", {
+        method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clientName,
@@ -162,7 +186,8 @@ export function InvoiceFlow({
         return;
       }
       setGenerated(json.document.content, json.document.id);
-      setCreditsRemaining(json.creditsRemaining);
+      // Edits spend no credit, so the response has no balance to show.
+      if (json.creditsRemaining !== undefined) setCreditsRemaining(json.creditsRemaining);
     } catch {
       setSubmitError("Something went wrong. Please try again.");
     } finally {
@@ -198,7 +223,7 @@ export function InvoiceFlow({
           </Link>
           <span className="h-[18px] w-px bg-line-input" />
           <span className="font-display text-[15px] font-semibold tracking-[-0.01em] text-fg-bright">
-            New invoice
+            {isEditing ? `Edit invoice${initialEdit?.docNumber ? ` ${initialEdit.docNumber}` : ""}` : "New invoice"}
           </span>
         </div>
         <InvoiceStepIndicator step={step} />
@@ -292,7 +317,7 @@ export function InvoiceFlow({
               <div className="ml-auto flex items-center gap-4">
                 <span className="flex items-center gap-[7px] text-[13px] text-fg-tertiary">
                   <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-                  {creditsRemaining} credits · uses 1
+                  {isEditing ? "Editing is free" : `${creditsRemaining} credits · uses 1`}
                 </span>
                 <button
                   type="button"
@@ -305,8 +330,12 @@ export function InvoiceFlow({
                     : step < LAST_STEP
                       ? "Continue"
                       : generated
-                        ? "Regenerate"
-                        : "Generate invoice"}
+                        ? isEditing
+                          ? "Save again"
+                          : "Regenerate"
+                        : isEditing
+                          ? "Save changes"
+                          : "Generate invoice"}
                   {!isSubmitting && (
                     <span className="translate-y-[0.5px] text-[1.05em] leading-none">
                       {step < LAST_STEP ? "→" : "✦"}

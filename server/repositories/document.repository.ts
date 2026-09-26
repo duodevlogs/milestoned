@@ -115,6 +115,32 @@ export const documentRepository = {
   },
 
   /**
+   * Scoped to (id, userId) — replaces an existing document's editable
+   * fields in place (id, docNumber, docType, status, sharedAt, createdAt
+   * are deliberately untouched). Returns null if it isn't the caller's.
+   */
+  async updateContentForUser(
+    id: string,
+    userId: string,
+    fields: {
+      clientName: string;
+      clientId: string | null;
+      projectName: string;
+      projectId: string | null;
+      relatedDocumentId: string | null;
+      content: unknown;
+    }
+  ): Promise<Document | null> {
+    const db = getDb();
+    const rows = await db
+      .update(documents)
+      .set(fields)
+      .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+      .returning();
+    return rows[0] ?? null;
+  },
+
+  /**
    * Scoped to (id, userId) — same ownership rule as updateStatus. Toggles
    * Client Portal visibility for one document; null unshares it. Separate
    * from `status` entirely — a document can be "signed" and still unshared.

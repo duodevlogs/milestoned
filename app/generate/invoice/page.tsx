@@ -6,8 +6,14 @@ import { appSettingsService } from "@/server/services/app-settings.service";
 import { InvoiceFlow } from "@/components/generate/invoice/InvoiceFlow";
 import { userService } from "@/server/services/user.service";
 import { getSuggestedTaxRate } from "@/lib/tax-rates";
+import { invoiceToFormValues } from "@/lib/invoice-edit";
+import type { InvoiceContent } from "@/lib/invoice-generation";
 
-export default async function GenerateInvoicePage() {
+export default async function GenerateInvoicePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const user = await authService.getUser();
   if (!user) {
     redirect("/login");
@@ -16,11 +22,26 @@ export default async function GenerateInvoicePage() {
     redirect("/welcome");
   }
 
-  const [profile, clients, linkableDocuments] = await Promise.all([
+  const params = await searchParams;
+  const editId = typeof params.edit === "string" ? params.edit : null;
+
+  const [profile, clients, linkableDocuments, editDoc] = await Promise.all([
     userService.getProfile(user.id),
     clientController.listForUser(user.id),
     documentService.listLinkableForInvoice(user.id),
+    editId ? documentService.getForUser(user.id, editId).catch(() => null) : null,
   ]);
+
+  // Only the caller's own invoice can be edited; anything else (stale link,
+  // wrong type, someone else's id) just opens a blank new invoice.
+  const initialEdit =
+    editDoc && editDoc.docType === "invoice"
+      ? {
+          documentId: editDoc.id,
+          docNumber: editDoc.docNumber,
+          values: invoiceToFormValues(editDoc.content as InvoiceContent, editDoc),
+        }
+      : null;
 
   return (
     <InvoiceFlow
@@ -28,6 +49,7 @@ export default async function GenerateInvoicePage() {
       clients={clients}
       linkableDocuments={linkableDocuments}
       defaultTaxRatePct={getSuggestedTaxRate(profile?.country)}
+      initialEdit={initialEdit}
     />
   );
 }
