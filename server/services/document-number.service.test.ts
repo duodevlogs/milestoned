@@ -25,6 +25,14 @@ describe("documentNumberService.generate", () => {
     expect(result).toBe("DDL-INV-2026-014");
   });
 
+  it("ignores brackets and other non-letter tokens when deriving initials", async () => {
+    nextNumber.mockResolvedValue(1);
+    expect(
+      await documentNumberService.generate("user-1", "invoice", "Ishraq Haider Chowdhury (Duo Dev Logs)")
+    ).toBe("IHC-INV-2026-001");
+    expect(await documentNumberService.generate("user-1", "invoice", "Acme & Sons")).toBe("AS-INV-2026-001");
+  });
+
   it("falls back to DOC when there's no business name yet", async () => {
     nextNumber.mockResolvedValue(1);
     expect(await documentNumberService.generate("user-1", "invoice", null)).toBe(

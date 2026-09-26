@@ -8,9 +8,13 @@ import type { DocType } from "@/lib/document-generation";
 function deriveInitials(businessName: string | null | undefined): string {
   if (!businessName?.trim()) return "DOC";
   const initials = businessName
+    // Bracketed text is a label, not part of the name: "Ishraq Chowdhury
+    // (Duo Dev Logs)" is IC, and must never put a "(" in a document number.
+    .replace(/\([^)]*\)/g, " ")
     .trim()
     .split(/\s+/)
-    .map((word) => word[0]?.toUpperCase() ?? "")
+    .filter((word) => /^\p{L}/u.test(word))
+    .map((word) => word[0].toUpperCase())
     .join("");
   return initials.slice(0, 4) || "DOC";
 }
