@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { OptionalField } from "./OptionalField";
 import type { InvoiceCurrency } from "@/lib/invoice-generation";
 import type { OptionalKey } from "@/lib/stores/invoice-form.store";
@@ -13,22 +14,30 @@ type BillingField =
   | "taxNote"
   | "lateFeeNote"
   | "serviceDate"
-  | "clientTaxId";
+  | "clientTaxId"
+  | "customPaymentDetails";
 
 export function BillingDetailsStep({
   values,
   currency,
   enabled,
+  paymentMethods,
+  selectedPaymentIds,
   onField,
   onCurrency,
   onToggle,
+  onTogglePaymentMethod,
 }: {
   values: Record<BillingField, string>;
   currency: InvoiceCurrency;
   enabled: Record<OptionalKey, boolean>;
+  /** The account's saved payment methods, as printed. */
+  paymentMethods: { id: string; title: string; lines: string[] }[];
+  selectedPaymentIds: string[];
   onField: (field: BillingField, value: string) => void;
   onCurrency: (value: InvoiceCurrency) => void;
   onToggle: (key: OptionalKey) => void;
+  onTogglePaymentMethod: (id: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-5">
@@ -77,6 +86,64 @@ export function BillingDetailsStep({
             ))}
           </select>
         </label>
+      </div>
+
+      <div className="border-t border-line-faint pt-5">
+        <div className="mb-1 text-[13px] font-medium text-fg-label">How to pay you</div>
+        <p className="mb-3 text-[12.5px] leading-[1.4] text-fg-tertiary">
+          Tick every method to show on this invoice — one, several, or all.{" "}
+          <Link href="/account" className="text-gold">
+            Manage payment methods
+          </Link>
+        </p>
+        <div className="flex flex-col gap-2.5">
+          {paymentMethods.length === 0 && (
+            <div className="rounded-xl border border-line-input bg-white/[0.01] px-3.5 py-3 text-[12.5px] text-fg-tertiary">
+              No saved payment methods yet — add PayPal, a bank account and more in Account settings, or use
+              custom details below.
+            </div>
+          )}
+          {paymentMethods.map((method) => {
+            const checked = selectedPaymentIds.includes(method.id);
+            return (
+              <label
+                key={method.id}
+                className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition-colors ${
+                  checked ? "border-gold-soft bg-white/[0.02]" : "border-line-input bg-white/[0.01]"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => onTogglePaymentMethod(method.id)}
+                  className="mt-[3px] h-4 w-4 shrink-0 cursor-pointer accent-gold"
+                />
+                <span className="min-w-0">
+                  <span className="block text-[14px] font-medium text-fg">{method.title}</span>
+                  {method.lines.slice(0, 2).map((line) => (
+                    <span key={line} className="block truncate text-[12.5px] text-fg-tertiary">
+                      {line}
+                    </span>
+                  ))}
+                </span>
+              </label>
+            );
+          })}
+          <OptionalField
+            label="Custom payment details (this invoice only)"
+            hint="For a one-off method you don't want to save."
+            checked={enabled.customPayment}
+            onToggle={() => onToggle("customPayment")}
+          >
+            <textarea
+              className="ms-field"
+              rows={4}
+              maxLength={800}
+              value={values.customPaymentDetails}
+              onChange={(e) => onField("customPaymentDetails", e.target.value)}
+            />
+          </OptionalField>
+        </div>
       </div>
 
       <div className="border-t border-line-faint pt-5">

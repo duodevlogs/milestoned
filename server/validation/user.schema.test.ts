@@ -33,9 +33,6 @@ describe("updateBusinessDetailsSchema", () => {
     expect(() =>
       updateBusinessDetailsSchema.parse({ companyRegistration: "a".repeat(61) })
     ).toThrow();
-    expect(() =>
-      updateBusinessDetailsSchema.parse({ paymentInstructions: "a".repeat(501) })
-    ).toThrow();
   });
 
   it("accepts a known country code or an empty string, and rejects anything else", () => {

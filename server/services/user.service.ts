@@ -26,7 +26,6 @@ export const userService = {
       businessAddress?: string;
       taxId?: string;
       companyRegistration?: string;
-      paymentInstructions?: string;
       country?: string;
     }
   ): Promise<void> {

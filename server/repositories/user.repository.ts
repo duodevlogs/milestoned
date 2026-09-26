@@ -3,6 +3,7 @@ import "server-only";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import { users, type User } from "@/server/db/schema";
+import type { SavedPaymentMethod } from "@/lib/payment-methods";
 
 export const userRepository = {
   async findById(id: string): Promise<User | null> {
@@ -64,7 +65,6 @@ export const userRepository = {
       businessAddress?: string;
       taxId?: string;
       companyRegistration?: string;
-      paymentInstructions?: string;
       country?: string;
     }
   ): Promise<void> {
@@ -72,17 +72,21 @@ export const userRepository = {
       businessAddress: string;
       taxId: string;
       companyRegistration: string;
-      paymentInstructions: string;
       country: string;
     }> = {};
     if (input.businessAddress !== undefined) set.businessAddress = input.businessAddress;
     if (input.taxId !== undefined) set.taxId = input.taxId;
     if (input.companyRegistration !== undefined) set.companyRegistration = input.companyRegistration;
-    if (input.paymentInstructions !== undefined) set.paymentInstructions = input.paymentInstructions;
     if (input.country !== undefined) set.country = input.country;
     if (Object.keys(set).length === 0) return;
 
     const db = getDb();
     await db.update(users).set(set).where(eq(users.id, id));
+  },
+
+  /** Replaces the whole saved list — it's a short jsonb array, validated by payment-method.service.ts. */
+  async updatePaymentMethods(id: string, methods: SavedPaymentMethod[]): Promise<void> {
+    const db = getDb();
+    await db.update(users).set({ paymentMethods: methods }).where(eq(users.id, id));
   },
 };

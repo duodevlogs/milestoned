@@ -9,12 +9,19 @@ import type { InvoiceFormValues } from "@/lib/stores/invoice-form.store";
  */
 export function invoiceToFormValues(
   content: InvoiceContent,
-  row: { clientId: string | null; relatedDocumentId: string | null }
+  row: { clientId: string | null; relatedDocumentId: string | null },
+  /** Ids of the account's currently saved payment methods — a method deleted since can't be re-ticked. */
+  savedPaymentMethodIds: string[] = []
 ): InvoiceFormValues {
   // undefined = generated before the late-fee note was optional, when the
   // standard line was always printed — keep it ticked so an edit doesn't
   // silently drop it (the user can untick it).
   const lateFee = content.lateFeeNote === undefined ? INVOICE_LATE_FEE_NOTE : content.lateFeeNote;
+
+  // An invoice from before saved payment methods carried one free-text box;
+  // load it as this invoice's custom payment details so an edit keeps it.
+  const isLegacyPayment = content.paymentMethods === undefined;
+  const customPayment = isLegacyPayment ? content.paymentInstructions ?? "" : content.customPaymentDetails ?? "";
 
   return {
     clientName: content.clientName,
@@ -45,7 +52,12 @@ export function invoiceToFormValues(
       milestoneProgress: Boolean(content.milestoneProgress),
       thankYou: Boolean(content.thankYouNote),
       additionalDetails: Boolean(content.additionalDetails),
+      customPayment: Boolean(customPayment),
     },
+    paymentMethodIds: (content.paymentMethods ?? [])
+      .map((m) => m.methodId)
+      .filter((id) => savedPaymentMethodIds.includes(id)),
+    customPaymentDetails: customPayment,
     lineItems: content.lineItems.map((item) => ({
       description: item.description,
       milestoneLabel: item.milestoneLabel ?? "",

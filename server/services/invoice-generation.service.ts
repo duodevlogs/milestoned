@@ -9,6 +9,7 @@ import { AppError } from "@/server/errors";
 import { DOC_TYPE_META } from "@/lib/document-display";
 import { computeInvoiceTotals, type InvoiceContent } from "@/lib/invoice-generation";
 import type { GenerateInvoiceInput } from "@/server/validation/invoice-generation.schema";
+import { formatPaymentMethod, type SavedPaymentMethod } from "@/lib/payment-methods";
 import type { Document } from "@/server/db/schema";
 
 type InvoiceProfile = {
@@ -16,10 +17,29 @@ type InvoiceProfile = {
   businessAddress: string | null;
   taxId: string | null;
   companyRegistration: string | null;
-  paymentInstructions: string | null;
+  paymentMethods: SavedPaymentMethod[];
 } | null;
 
 /** Shared by generate and update — the invoice body is identical either way, only docNumber/generatedAt differ. */
+/** Turns the ticked ids into printable snapshots, in the account's own order. An unknown id is an error, never silently dropped — that would print an invoice with no way to pay. */
+function resolvePaymentMethods(
+  profile: InvoiceProfile,
+  ids: string[]
+): { methodId: string; title: string; lines: string[] }[] {
+  const saved = profile?.paymentMethods ?? [];
+  for (const id of ids) {
+    if (!saved.some((m) => m.id === id)) {
+      throw AppError.badRequest(
+        "A selected payment method no longer exists. Reload and pick again.",
+        "payment_method_not_found"
+      );
+    }
+  }
+  return saved
+    .filter((m) => ids.includes(m.id))
+    .map((m) => ({ methodId: m.id, ...formatPaymentMethod(m) }));
+}
+
 function buildInvoiceContent(
   input: GenerateInvoiceInput,
   profile: InvoiceProfile,
@@ -65,7 +85,9 @@ function buildInvoiceContent(
     taxAmount,
     total,
     currency: input.currency,
-    paymentInstructions: profile?.paymentInstructions ?? null,
+    paymentInstructions: null,
+    paymentMethods: resolvePaymentMethods(profile, input.paymentMethodIds),
+    customPaymentDetails: input.customPaymentDetails || null,
     poNumber: input.poNumber || null,
     thankYouNote: input.thankYouNote || null,
     additionalDetails: input.additionalDetails || null,

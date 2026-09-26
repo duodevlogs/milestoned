@@ -47,6 +47,7 @@ export function InvoiceFlow({
   linkableDocuments,
   defaultTaxRatePct,
   initialEdit,
+  paymentMethods,
 }: {
   initialCredits: number;
   clients: ClientWithDocumentCount[];
@@ -55,6 +56,8 @@ export function InvoiceFlow({
   defaultTaxRatePct: number | null;
   /** Set when opened as /generate/invoice?edit=<id> — the saved invoice to load into the wizard. */
   initialEdit: { documentId: string; docNumber: string | null; values: InvoiceFormValues } | null;
+  /** The account's saved payment methods, as printed, with which are pre-ticked on a new invoice. */
+  paymentMethods: { id: string; title: string; lines: string[]; isDefault: boolean }[];
 }) {
   const {
     step,
@@ -76,6 +79,8 @@ export function InvoiceFlow({
     clientTaxId,
     discountAmount,
     enabled,
+    paymentMethodIds,
+    customPaymentDetails,
     lineItems,
     milestoneCurrent,
     milestoneTotal,
@@ -88,6 +93,8 @@ export function InvoiceFlow({
     setField,
     setCurrency,
     toggleOptional,
+    togglePaymentMethod,
+    setPaymentMethodIds,
     selectRelatedDocument,
     addMilestoneAsLineItem,
     setLineItemDescription,
@@ -112,8 +119,12 @@ export function InvoiceFlow({
   useEffect(() => {
     if (initialEdit) {
       hydrateForEdit(initialEdit.values, initialEdit.documentId);
-    } else if (editingDocumentId) {
-      resetForNew();
+    } else {
+      if (editingDocumentId) resetForNew();
+      // A new invoice starts with the methods marked "pre-tick" in Account settings.
+      if (paymentMethodIds.length === 0 || editingDocumentId) {
+        setPaymentMethodIds(paymentMethods.filter((m) => m.isDefault).map((m) => m.id));
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -163,6 +174,8 @@ export function InvoiceFlow({
           dueDate: dueDate || undefined,
           paymentTermsLabel,
           poNumber: (enabled.poNumber && poNumber) || undefined,
+          paymentMethodIds,
+          customPaymentDetails: (enabled.customPayment && customPaymentDetails) || undefined,
           currency,
           taxRatePct: effectiveTaxRatePct,
           discountAmount: effectiveDiscount,
@@ -269,12 +282,16 @@ export function InvoiceFlow({
                 lateFeeNote,
                 serviceDate,
                 clientTaxId,
+                customPaymentDetails,
               }}
               currency={currency}
               enabled={enabled}
+              paymentMethods={paymentMethods}
+              selectedPaymentIds={paymentMethodIds}
               onField={setField}
               onCurrency={setCurrency}
               onToggle={handleToggle}
+              onTogglePaymentMethod={togglePaymentMethod}
             />
           )}
           {step === 2 && (

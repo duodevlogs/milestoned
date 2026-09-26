@@ -17,7 +17,8 @@ export type OptionalKey =
   | "discount"
   | "milestoneProgress"
   | "thankYou"
-  | "additionalDetails";
+  | "additionalDetails"
+  | "customPayment";
 
 const NO_OPTIONALS: Record<OptionalKey, boolean> = {
   tax: false,
@@ -30,6 +31,7 @@ const NO_OPTIONALS: Record<OptionalKey, boolean> = {
   milestoneProgress: false,
   thankYou: false,
   additionalDetails: false,
+  customPayment: false,
 };
 
 export interface InvoiceLineItemInput {
@@ -62,6 +64,9 @@ export interface InvoiceFormValues {
   clientTaxId: string;
   discountAmount: string;
   enabled: Record<OptionalKey, boolean>;
+  /** Ids of the saved payment methods ticked for this invoice. */
+  paymentMethodIds: string[];
+  customPaymentDetails: string;
   lineItems: InvoiceLineItemInput[];
   milestoneCurrent: string;
   milestoneTotal: string;
@@ -89,6 +94,8 @@ function freshInvoiceValues(): InvoiceFormValues {
     clientTaxId: "",
     discountAmount: "",
     enabled: { ...NO_OPTIONALS },
+    paymentMethodIds: [],
+    customPaymentDetails: "",
     lineItems: [{ ...DEFAULT_LINE_ITEM }],
     milestoneCurrent: "",
     milestoneTotal: "",
@@ -119,6 +126,8 @@ interface InvoiceFormState {
   clientTaxId: string;
   discountAmount: string;
   enabled: Record<OptionalKey, boolean>;
+  paymentMethodIds: string[];
+  customPaymentDetails: string;
 
   lineItems: InvoiceLineItemInput[];
   milestoneCurrent: string;
@@ -147,6 +156,7 @@ interface InvoiceFormState {
       | "taxRatePct"
       | "thankYouNote"
       | "additionalDetails"
+      | "customPaymentDetails"
       | "taxNote"
       | "lateFeeNote"
       | "serviceDate"
@@ -158,6 +168,8 @@ interface InvoiceFormState {
   ) => void;
   setCurrency: (currency: InvoiceCurrency) => void;
   toggleOptional: (key: OptionalKey) => void;
+  togglePaymentMethod: (id: string) => void;
+  setPaymentMethodIds: (ids: string[]) => void;
   selectRelatedDocument: (documentId: string | null) => void;
   addMilestoneAsLineItem: (milestone: {
     label: string;
@@ -193,6 +205,14 @@ export const useInvoiceFormStore = create<InvoiceFormState>((set) => ({
     set({ clientId: client?.id ?? null, clientName: client?.name ?? "", generated: null }),
   setField: (field, value) => set({ [field]: value, generated: null }),
   setCurrency: (currency) => set({ currency, generated: null }),
+  togglePaymentMethod: (id) =>
+    set((s) => ({
+      paymentMethodIds: s.paymentMethodIds.includes(id)
+        ? s.paymentMethodIds.filter((x) => x !== id)
+        : [...s.paymentMethodIds, id],
+      generated: null,
+    })),
+  setPaymentMethodIds: (ids) => set({ paymentMethodIds: ids, generated: null }),
   toggleOptional: (key) =>
     set((s) => ({ enabled: { ...s.enabled, [key]: !s.enabled[key] }, generated: null })),
   selectRelatedDocument: (documentId) => set({ relatedDocumentId: documentId, generated: null }),

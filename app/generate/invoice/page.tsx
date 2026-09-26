@@ -7,6 +7,7 @@ import { InvoiceFlow } from "@/components/generate/invoice/InvoiceFlow";
 import { userService } from "@/server/services/user.service";
 import { getSuggestedTaxRate } from "@/lib/tax-rates";
 import { invoiceToFormValues } from "@/lib/invoice-edit";
+import { formatPaymentMethod } from "@/lib/payment-methods";
 import type { InvoiceContent } from "@/lib/invoice-generation";
 
 export default async function GenerateInvoicePage({
@@ -39,7 +40,11 @@ export default async function GenerateInvoicePage({
       ? {
           documentId: editDoc.id,
           docNumber: editDoc.docNumber,
-          values: invoiceToFormValues(editDoc.content as InvoiceContent, editDoc),
+          values: invoiceToFormValues(
+            editDoc.content as InvoiceContent,
+            editDoc,
+            (profile?.paymentMethods ?? []).map((m) => m.id)
+          ),
         }
       : null;
 
@@ -50,6 +55,11 @@ export default async function GenerateInvoicePage({
       linkableDocuments={linkableDocuments}
       defaultTaxRatePct={getSuggestedTaxRate(profile?.country)}
       initialEdit={initialEdit}
+      paymentMethods={(profile?.paymentMethods ?? []).map((m) => ({
+        id: m.id,
+        isDefault: m.isDefault,
+        ...formatPaymentMethod(m),
+      }))}
     />
   );
 }

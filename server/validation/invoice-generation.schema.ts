@@ -32,6 +32,10 @@ export const generateInvoiceSchema = z.object({
   lateFeeNote: z.string().trim().max(400, "Keep the late-fee note under 400 characters.").optional(),
   serviceDate: z.string().trim().max(100, "Keep the service date under 100 characters.").optional(),
   clientTaxId: z.string().trim().max(60, "Keep the client tax ID under 60 characters.").optional(),
+  // Ids of the account's saved payment methods to show; resolved server-side,
+  // never trusted as content.
+  paymentMethodIds: z.array(z.string()).max(15).default([]),
+  customPaymentDetails: z.string().trim().max(800, "Keep custom payment details under 800 characters.").optional(),
   additionalDetails: z.string().trim().max(1500, "Keep additional details under 1500 characters.").optional(),
 });
 

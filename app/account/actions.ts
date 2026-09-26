@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { authService } from "@/server/services/auth.service";
 import { authController } from "@/server/controllers/auth.controller";
 import { userController } from "@/server/controllers/user.controller";
+import { paymentMethodController } from "@/server/controllers/payment-method.controller";
 import { storageService } from "@/server/services/storage.service";
 import { publicMessage } from "@/server/errors";
 
@@ -61,16 +62,49 @@ export async function updateBusinessDetails(formData: FormData) {
     const businessAddress = formData.get("businessAddress");
     const taxId = formData.get("taxId");
     const companyRegistration = formData.get("companyRegistration");
-    const paymentInstructions = formData.get("paymentInstructions");
     const country = formData.get("country");
 
     await userController.updateBusinessDetails(user.id, {
       businessAddress: typeof businessAddress === "string" ? businessAddress : undefined,
       taxId: typeof taxId === "string" ? taxId : undefined,
       companyRegistration: typeof companyRegistration === "string" ? companyRegistration : undefined,
-      paymentInstructions: typeof paymentInstructions === "string" ? paymentInstructions : undefined,
       country: typeof country === "string" ? country : undefined,
     });
+  } catch (error) {
+    destination = `/account?error=${encodeURIComponent(publicMessage(error))}`;
+  }
+  redirect(destination);
+}
+
+export async function savePaymentMethod(formData: FormData) {
+  const user = await authService.requireUser();
+  let destination = "/account?updated=payment-methods";
+  try {
+    // Each type has its own fields, posted as f_<key> — the type's registry
+    // (lib/payment-methods.ts) decides which are kept.
+    const fields: Record<string, string> = {};
+    for (const [key, value] of formData.entries()) {
+      if (key.startsWith("f_") && typeof value === "string") fields[key.slice(2)] = value;
+    }
+    const id = formData.get("id");
+    await paymentMethodController.save(user.id, {
+      id: typeof id === "string" && id ? id : undefined,
+      type: formData.get("type"),
+      label: formData.get("label") ?? "",
+      fields,
+      isDefault: formData.get("isDefault") === "on",
+    });
+  } catch (error) {
+    destination = `/account?error=${encodeURIComponent(publicMessage(error))}`;
+  }
+  redirect(destination);
+}
+
+export async function deletePaymentMethod(formData: FormData) {
+  const user = await authService.requireUser();
+  let destination = "/account?updated=payment-methods";
+  try {
+    await paymentMethodController.remove(user.id, { id: formData.get("id") });
   } catch (error) {
     destination = `/account?error=${encodeURIComponent(publicMessage(error))}`;
   }

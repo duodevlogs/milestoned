@@ -14,7 +14,6 @@ export const updateBusinessDetailsSchema = z.object({
   businessAddress: z.string().trim().max(300, "Keep it under 300 characters.").optional(),
   taxId: z.string().trim().max(60, "Keep it under 60 characters.").optional(),
   companyRegistration: z.string().trim().max(60, "Keep it under 60 characters.").optional(),
-  paymentInstructions: z.string().trim().max(500, "Keep it under 500 characters.").optional(),
   // "" clears the selection — used to suggest a default VAT/tax rate on new invoices.
   country: z.union([z.enum(COUNTRY_CODES), z.literal("")]).optional(),
 });

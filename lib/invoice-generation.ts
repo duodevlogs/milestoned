@@ -63,7 +63,12 @@ export interface InvoiceContent {
   clientTaxId?: string | null;
 
   // Payment terms.
+  /** Legacy single free-text box — invoices generated before saved payment methods. New invoices leave it null. */
   paymentInstructions: string | null;
+  /** The saved payment methods ticked for this invoice, as printed (a snapshot, so later account changes don't rewrite it). `undefined` = a pre-payment-methods invoice. */
+  paymentMethods?: { methodId: string; title: string; lines: string[] }[];
+  /** One-off payment details typed for this invoice only. */
+  customPaymentDetails?: string | null;
   poNumber: string | null;
   thankYouNote: string | null;
   /** Free multi-line block printed as its own section — e.g. the client's remittance/bank details or transfer-fee terms. */

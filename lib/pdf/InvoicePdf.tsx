@@ -218,6 +218,15 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     marginTop: 4,
   },
+  paymentTitle: {
+    fontSize: 9.5,
+    fontFamily: "Helvetica-Bold",
+    color: COLORS.ink,
+    marginBottom: 2,
+  },
+  paymentGroup: {
+    marginBottom: 8,
+  },
   paymentLine: {
     fontSize: 9.5,
     color: COLORS.body,
@@ -402,10 +411,33 @@ export function InvoicePdf({
 
         <View style={styles.paymentBlock} wrap={false}>
           <Text style={styles.sectionTitle}>Payment</Text>
-          {content.paymentInstructions ? (
-            <Text style={styles.paymentLine}>{content.paymentInstructions}</Text>
-          ) : (
+          {content.paymentMethods === undefined ? (
+            // Invoice generated before saved payment methods: the old single text box.
+            content.paymentInstructions ? (
+              <Text style={styles.paymentLine}>{content.paymentInstructions}</Text>
+            ) : (
+              <Text style={styles.paymentLine}>Payment instructions to be provided separately.</Text>
+            )
+          ) : content.paymentMethods.length === 0 && !content.customPaymentDetails ? (
             <Text style={styles.paymentLine}>Payment instructions to be provided separately.</Text>
+          ) : (
+            <>
+              {content.paymentMethods.map((method) => (
+                <View key={method.methodId} style={styles.paymentGroup}>
+                  <Text style={styles.paymentTitle}>{method.title}</Text>
+                  {method.lines.map((line, i) => (
+                    <Text key={i} style={styles.paymentLine}>
+                      {line}
+                    </Text>
+                  ))}
+                </View>
+              ))}
+              {content.customPaymentDetails && (
+                <View style={styles.paymentGroup}>
+                  <Text style={styles.paymentLine}>{content.customPaymentDetails}</Text>
+                </View>
+              )}
+            </>
           )}
           {/* undefined = an invoice generated before this was optional, which always printed the standard line */}
           {(content.lateFeeNote === undefined ? INVOICE_LATE_FEE_NOTE : content.lateFeeNote) && (

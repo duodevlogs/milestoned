@@ -63,6 +63,8 @@ describe("invoiceToFormValues", () => {
         milestoneProgress: { current: 2, total: 4 },
         thankYouNote: "thanks",
         additionalDetails: "bank",
+        paymentMethods: [],
+        customPaymentDetails: "cheque",
       }),
       ROW
     );
@@ -75,5 +77,36 @@ describe("invoiceToFormValues", () => {
     const v = invoiceToFormValues(content(), ROW); // lateFeeNote undefined
     expect(v.enabled.lateFee).toBe(true);
     expect(v.lateFeeNote).toBe(INVOICE_LATE_FEE_NOTE);
+  });
+
+  it("re-ticks saved payment methods that still exist, and drops ones deleted since", () => {
+    const v = invoiceToFormValues(
+      content({
+        paymentMethods: [
+          { methodId: "pm-1", title: "PayPal", lines: [] },
+          { methodId: "gone", title: "Old bank", lines: [] },
+        ],
+        customPaymentDetails: null,
+      }),
+      ROW,
+      ["pm-1", "pm-2"]
+    );
+    expect(v.paymentMethodIds).toEqual(["pm-1"]);
+    expect(v.enabled.customPayment).toBe(false);
+  });
+
+  it("ticks custom payment details when the invoice has them", () => {
+    const v = invoiceToFormValues(
+      content({ paymentMethods: [], customPaymentDetails: "Cheque" }),
+      ROW
+    );
+    expect(v.enabled.customPayment).toBe(true);
+    expect(v.customPaymentDetails).toBe("Cheque");
+  });
+
+  it("loads a pre-feature invoice's payment text as custom payment details", () => {
+    const v = invoiceToFormValues(content({ paymentInstructions: "PayPal: x" }), ROW);
+    expect(v.enabled.customPayment).toBe(true);
+    expect(v.customPaymentDetails).toBe("PayPal: x");
   });
 });

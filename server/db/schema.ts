@@ -16,6 +16,7 @@ import {
   uuid,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
+import type { SavedPaymentMethod } from "@/lib/payment-methods";
 
 /*
  * Singleton settings row — launchedAt stays null until the founder flips it
@@ -48,6 +49,13 @@ export const users = pgTable("users", {
   taxId: text("tax_id"),
   companyRegistration: text("company_registration"),
   paymentInstructions: text("payment_instructions"),
+  // Saved payment methods (see lib/payment-methods.ts) — what invoices show as
+  // "pay me here". paymentInstructions above is legacy: invoices generated
+  // before this existed carry a copy, but it is no longer edited.
+  paymentMethods: jsonb("payment_methods")
+    .$type<SavedPaymentMethod[]>()
+    .notNull()
+    .default([]),
   // ISO 3166-1 alpha-2 code — suggests a default VAT/tax rate on new
   // invoices (lib/tax-rates.ts), never printed on generated documents.
   country: text("country"),

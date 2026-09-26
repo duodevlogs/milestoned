@@ -7,6 +7,7 @@ import { appSettingsService } from "@/server/services/app-settings.service";
 import { updateEmail, updatePassword, updateBranding, updateBusinessDetails } from "./actions";
 import { formatPackagePrice } from "@/lib/credit-packages";
 import { COUNTRIES } from "@/lib/tax-rates";
+import { PaymentMethodsSection } from "@/components/account/PaymentMethodsSection";
 
 export default async function AccountPage({
   searchParams,
@@ -60,6 +61,7 @@ export default async function AccountPage({
         )}
         {updated === "password" && <Banner tone="ok">Your password has been updated.</Banner>}
         {updated === "branding" && <Banner tone="ok">Your branding has been updated.</Banner>}
+        {updated === "payment-methods" && <Banner tone="ok">Your payment methods have been updated.</Banner>}
         {updated === "business-details" && (
           <Banner tone="ok">Your business details have been updated.</Banner>
         )}
@@ -217,22 +219,6 @@ export default async function AccountPage({
                 />
               </label>
             </div>
-            <label className="block">
-              <span className="mb-2 block text-[13px] font-medium text-fg-label">
-                Payment instructions
-              </span>
-              <textarea
-                className="ms-field"
-                name="paymentInstructions"
-                rows={3}
-                maxLength={500}
-                defaultValue={profile?.paymentInstructions ?? ""}
-                placeholder="e.g. Bank transfer — IBAN DE00 0000 0000 0000 00, BIC XXXXXX. Or a Stripe/PayPal link."
-              />
-              <span className="mt-1.5 block text-[12px] text-fg-muted">
-                Shown exactly as written — free text, since payment details vary by country and method.
-              </span>
-            </label>
             <button
               type="submit"
               className="inline-flex cursor-pointer items-center gap-2 self-start rounded-[10px] border border-line-strong bg-transparent px-[18px] py-[11px] text-sm font-medium text-fg-soft"
@@ -240,6 +226,13 @@ export default async function AccountPage({
               Save business details
             </button>
           </form>
+        </Section>
+
+        <Section
+          title="Payment methods"
+          description="How clients can pay you. Save as many as you like, then tick the ones to show on each invoice."
+        >
+          <PaymentMethodsSection methods={profile?.paymentMethods ?? []} />
         </Section>
 
         <Section title="Billing history" description="Every credit top-up you've purchased.">
